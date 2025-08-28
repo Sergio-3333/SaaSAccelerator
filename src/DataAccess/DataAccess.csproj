@@ -11,6 +11,7 @@
 
 	<ItemGroup>
 		<Folder Include="Context\" />
+		<Folder Include="Entities\" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -28,4 +29,13 @@
 		</PackageReference>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Remove="Entities\" />
+	  <None Remove="Entities\Licenses.proto" />
+	  <None Remove="Entities\Clients.proto" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Include="Entities\Licenses.cs" />
+	  <Compile Include="Entities\Clients.cs" />
+	</ItemGroup>
 </Project>
