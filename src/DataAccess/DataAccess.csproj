@@ -33,9 +33,13 @@
 	  <None Remove="Entities\" />
 	  <None Remove="Entities\Licenses.proto" />
 	  <None Remove="Entities\Clients.proto" />
+	  <None Remove="Contracts\ILicensesRepository.json" />
+	  <None Remove="Contracts\IProductsRepository.json" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Include="Entities\Licenses.cs" />
 	  <Compile Include="Entities\Clients.cs" />
+	  <Compile Include="Contracts\ILicensesRepository.cs" />
+	  <Compile Include="Contracts\IProductsRepository.cs" />
 	</ItemGroup>
 </Project>
