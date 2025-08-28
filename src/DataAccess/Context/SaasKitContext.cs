@@ -21,7 +21,7 @@ public partial class SaasKitContext : DbContext
 
 
     public virtual DbSet<Subscriptions> Subscriptions { get; set; }
-    public virtual DbSet<License> Licenses { get; set; }
+    public virtual DbSet<Licenses> Licenses { get; set; }
     public virtual DbSet<Clients> Clients { get; set; }
     public virtual DbSet<Products> Products { get; set; }
 

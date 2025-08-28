@@ -5,7 +5,7 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 
 public interface ILicensesRepository : IBaseRepository<Licenses>
 {
-    Licenses GetByLicenseKey(string licenseKey);
-    IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
-    IEnumerable<Licenses> GetByProductId(int productId);
+  int Save(Licenses license);
+  Licenses GetByLicenseKey(string licenseKey);
+  IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
 }
