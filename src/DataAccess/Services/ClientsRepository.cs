@@ -1,45 +1,100 @@
-﻿using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Marketplace.SaaS.Accelerator.DataAccess.Context;
+using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
-using System;
 
-public class ClientsService
-{
-    private readonly IClientsRepository _clientsRepository;
+namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 
-    public ClientsService(IClientsRepository clientsRepository)
+    public class ClientsRepository : IClientsRepository
+     {
+        private readonly SaasKitContext _context;
+
+        public ClientsRepository(SaasKitContext context)
+        {
+            _context = context;
+        }
+
+    public IEnumerable<Clients> Get()
     {
-        _clientsRepository = clientsRepository;
+        return _context.Clients.ToList();
     }
 
-    public void CreateOrUpdateClientFromSubscription(Subscriptions subscription, int licenseId)
+    public Clients Get(int id)
     {
-        var existingClient = _clientsRepository.GetByLicenseId(licenseId);
+        return _context.Clients.FirstOrDefault(c => c.InstallationID == id);
+    }
+
+    public int Save(Clients entity)
+    {
+        var existing = Get(entity.InstallationID);
+        if (existing == null)
+        {
+            _context.Clients.Add(entity);
+        }
+        else
+        {
+            _context.Entry(existing).CurrentValues.SetValues(entity);
+        }
+        _context.SaveChanges();
+        return entity.InstallationID;
+    }
+
+    public void Remove(Clients entity)
+    {
+        _context.Clients.Remove(entity);
+        _context.SaveChanges();
+    }
+
+    public Clients GetByLicenseId(int licenseId)
+    {
+        return _context.Clients.FirstOrDefault(c => c.LicenseID == licenseId);
+    }
+
+    public Clients GetByEmail(string email)
+    {
+        return _context.Clients.FirstOrDefault(c => c.ContactInfoEmail == email);
+    }
+
+    public Clients GetByInstallationId(int installationId)
+    {
+        return _context.Clients.FirstOrDefault(c => c.InstallationID == installationId);
+    }
+
+    public void CreateOrUpdateClientFromSubscription(Subscriptions subscription, int licenseId, int installationId)
+    {
+        var existingClient = GetByInstallationId(installationId);
 
         if (existingClient != null)
         {
+            existingClient.LicenseID = licenseId;
             existingClient.ContactInfoEmail = subscription.PurchaserEmail;
             existingClient.ContactInfoCompany = subscription.Name;
             existingClient.UsageCounter = subscription.AMPQuantity;
             existingClient.InternalNote = subscription.PurchaserTenantId;
-            existingClient.CampaignGUID = subscription.MicrosoftId;
+            existingClient.CampaignGUID = subscription.MicrosoftId?.ToString();
             existingClient.LastAccessed = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
-            _clientsRepository.Save(existingClient);
+            Save(existingClient);
         }
         else
         {
             var newClient = new Clients
             {
+                InstallationID = installationId,
                 LicenseID = licenseId,
                 ContactInfoEmail = subscription.PurchaserEmail,
                 ContactInfoCompany = subscription.Name,
                 UsageCounter = subscription.AMPQuantity,
                 InternalNote = subscription.PurchaserTenantId,
-                CampaignGUID = subscription.MicrosoftId,
-                Created = subscription.StartDate?.ToString("yyyy-MM-dd") ?? DateTime.UtcNow.ToString("yyyy-MM-dd")
-            };
+                CampaignGUID = subscription.MicrosoftId?.ToString(),
+                Created = (subscription.StartDate ?? DateTime.UtcNow).ToString("yyyy-MM-dd")
+        };
 
-            _clientsRepository.Save(newClient);
+            Save(newClient);
         }
     }
+
 }
+

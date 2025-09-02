@@ -1,17 +1,14 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE file in the project root for license information.
-
+﻿
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using Azure.Identity;
+using Marketplace.Saas.Accelerator.Services.Services;
 using Marketplace.SaaS.Accelerator.AdminSite.Controllers;
 using Marketplace.SaaS.Accelerator.DataAccess.Context;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
-using Marketplace.SaaS.Accelerator.DataAccess.Services;
+using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
-using Marketplace.SaaS.Accelerator.Services.Models;
 using Marketplace.SaaS.Accelerator.Services.Services;
 using Marketplace.SaaS.Accelerator.Services.Utilities;
 using Microsoft.AspNetCore.Authentication;
@@ -25,8 +22,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.Marketplace.Metering;
 using Microsoft.Marketplace.SaaS;
@@ -211,27 +206,15 @@ public class Startup
     /// <param name="services">The services.</param>
     private static void InitializeRepositoryServices(IServiceCollection services)
     {
-        services.AddScoped<ISubscriptionsRepository, SubscriptionsRepository>();
-        services.AddScoped<IPlansRepository, PlansRepository>();
-        services.AddScoped<IUsersRepository, UsersRepository>();
-        services.AddScoped<ISubscriptionLogRepository, SubscriptionLogRepository>();
-        services.AddScoped<IApplicationConfigRepository, ApplicationConfigRepository>();
-        services.AddScoped<IApplicationLogRepository, ApplicationLogRepository>();
-        services.AddScoped<ISubscriptionUsageLogsRepository, SubscriptionUsageLogsRepository>();
-        services.AddScoped<IMeteredDimensionsRepository, MeteredDimensionsRepository>();
-        services.AddScoped<IKnownUsersRepository, KnownUsersRepository>();
-        services.AddScoped<IOffersRepository, OffersRepository>();
-        services.AddScoped<IValueTypesRepository, ValueTypesRepository>();
-        services.AddScoped<IOfferAttributesRepository, OfferAttributesRepository>();
-        services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
-        services.AddScoped<IPlanEventsMappingRepository, PlanEventsMappingRepository>();
-        services.AddScoped<IEventsRepository, EventsRepository>();
         services.AddScoped<KnownUserAttribute>();
         services.AddScoped<IEmailService, SMTPEmailService>();
-        services.AddScoped<ISAGitReleasesService, SAGitReleasesService>();
-        services.AddScoped<ISchedulerFrequencyRepository, SchedulerFrequencyRepository>();
-        services.AddScoped<IMeteredPlanSchedulerManagementRepository, MeteredPlanSchedulerManagementRepository>();
-        services.AddScoped<ISchedulerManagerViewRepository, SchedulerManagerViewRepository>();
+        services.AddScoped<ILicenseService, LicenseService>();
+        services.AddScoped<ILicensesRepository, LicensesRepository>();
+        services.AddScoped<ISubscriptionService, SubscriptionService>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductsRepository, ProductsRepository>();
+        services.AddScoped<IClientsRepository, ClientsRepository>();
+        services.AddScoped<IClientsService, ClientsService>();
         services.AddScoped<SaaSClientLogger<HomeController>>();
         services.AddScoped<SaaSClientLogger<PlansController>>();
         services.AddScoped<SaaSClientLogger<OffersController>>();
@@ -240,4 +223,5 @@ public class Startup
         services.AddScoped<SaaSClientLogger<ApplicationConfigController>>();
         services.AddScoped<SaaSClientLogger<SchedulerController>>();
     }
+
 }

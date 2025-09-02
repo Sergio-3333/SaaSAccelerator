@@ -5,6 +5,8 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 
 public interface IClientsRepository : IBaseRepository<Clients>
 {
+    Clients GetByInstallationId(int installationId);
     Clients GetByLicenseId(int licenseId);
-    IEnumerable<Clients> GetByEmail(string email);
+    Clients GetByEmail(string email);
+    void CreateOrUpdateClientFromSubscription(Subscriptions subscription, int licenseId, int installationId);
 }
