@@ -40,6 +40,5 @@
 	  <Compile Include="Entities\Licenses.cs" />
 	  <Compile Include="Entities\Clients.cs" />
 	  <Compile Include="Contracts\ILicensesRepository.cs" />
-	  <Compile Include="Contracts\IProductsRepository.cs" />
 	</ItemGroup>
 </Project>

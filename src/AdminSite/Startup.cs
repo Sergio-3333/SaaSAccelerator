@@ -211,8 +211,6 @@ public class Startup
         services.AddScoped<ILicenseService, LicenseService>();
         services.AddScoped<ILicensesRepository, LicensesRepository>();
         services.AddScoped<ISubscriptionService, SubscriptionService>();
-        services.AddScoped<IProductService, ProductService>();
-        services.AddScoped<IProductsRepository, ProductsRepository>();
         services.AddScoped<IClientsRepository, ClientsRepository>();
         services.AddScoped<IClientsService, ClientsService>();
         services.AddScoped<SaaSClientLogger<HomeController>>();
