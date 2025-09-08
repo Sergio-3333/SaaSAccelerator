@@ -9,13 +9,11 @@ namespace Marketplace.SaaS.Accelerator.Services.Services;
 public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionsRepository subscriptionRepository;
-    private readonly IProductsRepository productRepository;
     private readonly int currentUserId;
 
-    public SubscriptionService(ISubscriptionsRepository subscriptionRepo, IProductsRepository productRepository, int currentUserId = 0)
+    public SubscriptionService(ISubscriptionsRepository subscriptionRepo, int currentUserId = 0)
     {
         this.subscriptionRepository = subscriptionRepo;
-        this.productRepository = productRepository;
         this.currentUserId = currentUserId;
     }
 
@@ -23,7 +21,6 @@ public class SubscriptionService : ISubscriptionService
     {
         subscriptionRepository.UpdateStatus(subscriptionId.ToString(), status, isActivate);
     }
-
 
     public SubscriptionResultExtension GetSubscriptionsBySubscriptionId(Guid subscriptionId, bool includeUnsubscribed = true)
     {
@@ -39,14 +36,8 @@ public class SubscriptionService : ISubscriptionService
         return new SubscriptionResultExtension();
     }
 
-
-    public SubscriptionResultExtension PrepareSubscriptionResponse(Subscriptions subscription, Products existingProductDetail = null)
+    public SubscriptionResultExtension PrepareSubscriptionResponse(Subscriptions subscription)
     {
-        if (existingProductDetail == null && int.TryParse(subscription.AMPPlanId, out var productId))
-        {
-            existingProductDetail = productRepository.Get(productId);
-        }
-
         var subscritpionDetail = new SubscriptionResultExtension
         {
             Id = Guid.Parse(subscription.MicrosoftId),
@@ -59,7 +50,7 @@ public class SubscriptionService : ISubscriptionService
                 EndDate = subscription.EndDate.GetValueOrDefault(),
             },
             Quantity = subscription.AMPQuantity,
-            Name = existingProductDetail?.ProductName ?? subscription.Name,
+            Name = subscription.Name,
             SubscriptionStatus = GetSubscriptionStatus(subscription.SubscriptionStatus),
             IsActiveSubscription = subscription.IsActive ?? false,
             CustomerEmailAddress = null,
@@ -84,5 +75,21 @@ public class SubscriptionService : ISubscriptionService
     {
         var parseSuccessfull = Enum.TryParse(subscriptionStatus, out SubscriptionStatusEnumExtension status);
         return parseSuccessfull ? status : SubscriptionStatusEnumExtension.UnRecognized;
+    }
+
+    public void CreateSubscription(Subscriptions subscription)
+    {
+        subscription.Name = GetPlanName(subscription.AMPPlanId);
+        subscriptionRepository.Save(subscription);
+    }
+
+    private string GetPlanName(string ampPlanId)
+    {
+        return ampPlanId switch
+        {
+            "1" => "Standard",
+            "2" => "Business",
+            _ => "Unknown"
+        };
     }
 }
