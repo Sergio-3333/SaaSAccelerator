@@ -23,4 +23,12 @@
     <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="WebHook\" />
+    <None Remove="StatusHnadlers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="WebHook\" />
+    <Folder Include="StatusHnadlers\" />
+  </ItemGroup>
 </Project>

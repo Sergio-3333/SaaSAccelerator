@@ -22,5 +22,7 @@ public interface IFulfillmentApiService
 
     Task<List<Subscription>> GetAllSubscriptionAsync();
 
+    Task<bool> DeleteSubscriptionAsync(Guid subscriptionId, string planId);
+
     string GetSaaSAppURL();
 }
