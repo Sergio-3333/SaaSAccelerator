@@ -3,11 +3,11 @@ using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 
-public interface ISubscriptionsRepository : IBaseRepository<Subscriptions>
+public interface ISubscriptionsRepository
 {
-    int Save(Subscriptions subscription);
-    Subscriptions GetByMicrosoftId(string microsoftId);
-    IEnumerable<Subscriptions> GetActiveSubscriptions();
-    void UpdateStatus(string microsoftId, string subscriptionStatus, bool isActive);
-
+    string AddSubscription(Subscriptions subscription);
+    void UpdateSubscription(Subscriptions subscription);
+    Subscriptions GetSubscriptionByMicrosoftId(string microsoftId);
+    void UpdateSubscriptionStatus(string microsoftId, string subscriptionStatus, bool isActive);
 }
+

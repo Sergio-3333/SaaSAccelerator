@@ -26,59 +26,34 @@ public class LicensesRepository : ILicensesRepository
         return lastId + 1;
     }
 
-    public int Save(Licenses license)
+    public int CreateLicense(Licenses license)
     {
-        var existing = _context.Licenses
-            .FirstOrDefault(l => l.LicenseID == license.LicenseID);
-
-        if (existing != null)
-        {
-            // Datos de suscripción
-            existing.MicrosoftId = license.MicrosoftId;
-            existing.LicenseKey = license.LicenseKey;
-            existing.Status = license.Status;
-            existing.PurchasedLicenses = license.PurchasedLicenses;
-            existing.LicensesStd = license.LicensesStd;
-            existing.LicensesBiz = license.LicensesBiz;
-            existing.LicenseExpires = license.LicenseExpires;
-            existing.Created = license.Created;
-
-            // Datos enriquecidos desde Graph
-            existing.Company = license.Company;
-            existing.City = license.City;
-            existing.Name = license.Name;
-            existing.Email = license.Email;
-            existing.Phone = license.Phone;
-
-            _context.Licenses.Update(existing);
-            _context.SaveChanges();
-            return existing.LicenseID;
-        }
-
         _context.Licenses.Add(license);
         _context.SaveChanges();
         return license.LicenseID;
     }
 
-    public Licenses Get(int licenseId) =>
-        _context.Licenses.FirstOrDefault(l => l.LicenseID == licenseId);
+    public void UpdateLicense(Licenses license)
+    {
+        var existing = _context.Licenses
+            .FirstOrDefault(l => l.LicenseID == license.LicenseID);
 
-    public IEnumerable<Licenses> Get() =>
-        _context.Licenses.OrderByDescending(l => l.Created);
+        if (existing == null)
+            throw new InvalidOperationException("La licencia no existe.");
+
+        _context.Entry(existing).CurrentValues.SetValues(license);
+        _context.SaveChanges();
+    }
+
+    public Licenses GetById(int licenseId) =>
+        _context.Licenses.FirstOrDefault(l => l.LicenseID == licenseId);
 
     public Licenses GetByLicenseKey(string licenseKey) =>
         _context.Licenses.FirstOrDefault(l => l.LicenseKey == licenseKey);
 
     public IEnumerable<Licenses> GetByMicrosoftId(string microsoftId) =>
-        _context.Licenses.Where(l => l.MicrosoftId == microsoftId);
-
-    public void Remove(Licenses entity)
-    {
-        _context.Licenses.Remove(entity);
-        _context.SaveChanges();
-    }
+        _context.Licenses.Where(l => l.MicrosoftId == microsoftId).ToList();
 
     public Licenses GetByEmail(string email) =>
-    _context.Licenses.FirstOrDefault(l => l.Email == email);
-
+        _context.Licenses.FirstOrDefault(l => l.Email == email);
 }

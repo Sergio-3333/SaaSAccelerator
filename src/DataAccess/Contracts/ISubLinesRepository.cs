@@ -8,7 +8,7 @@ public interface ISubLinesRepository : IBaseRepository<SubLines>
     /// <summary>
     /// Obtiene todas las sublíneas asociadas a un MicrosoftId.
     /// </summary>
-    IEnumerable<SubLines> GetByMicrosoftId(int microsoftId);
+    IEnumerable<SubLines> GetByMicrosoftId(string microsoftId);
 
     /// <summary>
     /// Inserta una nueva línea de suscripción (renovación o compra inicial).

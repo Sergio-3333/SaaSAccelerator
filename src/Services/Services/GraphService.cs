@@ -1,12 +1,18 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using System.Linq;
+using Marketplace.SaaS.Accelerator.DataAccess;
 
+namespace Marketplace.SaaS.Accelerator.Services.Services;
 
+/// <summary>
+/// Servicio para obtener datos de Microsoft Graph y enriquecer un SubscriptionInputModel.
+/// </summary>
 public class GraphService
 {
     private readonly HttpClient _httpClient;
@@ -18,18 +24,39 @@ public class GraphService
         _config = config;
     }
 
-    public async Task<GraphUser> GetPrimaryUserAsync(string tenantId)
+    /// <summary>
+    /// Enriquecer un SubscriptionInputModel con datos del usuario principal del tenant.
+    /// </summary>
+    public async Task<SubscriptionInputModel> EnrichWithGraphAsync(SubscriptionInputModel model)
     {
-        var token = await GetTokenAsync(tenantId);
+        if (string.IsNullOrWhiteSpace(model.PurchaserTenantId))
+            throw new ArgumentException("El TenantId no puede estar vacío para consultar Graph.");
+
+        var token = await GetTokenAsync(model.PurchaserTenantId);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await _httpClient.GetAsync("https://graph.microsoft.com/v1.0/users");
-        var json = await response.Content.ReadAsStringAsync();
-        var users = JsonConvert.DeserializeObject<GraphUserList>(json);
+        response.EnsureSuccessStatusCode();
 
-        return users.value.FirstOrDefault(u => !string.IsNullOrEmpty(u.mail));
+        var json = await response.Content.ReadAsStringAsync();
+        dynamic users = JsonConvert.DeserializeObject(json);
+
+        var primaryUser = ((IEnumerable<dynamic>)users.value)
+            .FirstOrDefault(u => !string.IsNullOrEmpty((string)u.mail));
+
+        if (primaryUser != null)
+        {
+            // Solo sobrescribimos si el campo está vacío en el modelo original
+            model.Name ??= primaryUser.displayName;
+            model.PurchaserEmail ??= primaryUser.mail;
+        }
+
+        return model;
     }
 
+    /// <summary>
+    /// Obtiene un token de acceso para Microsoft Graph usando client_credentials.
+    /// </summary>
     private async Task<string> GetTokenAsync(string tenantId)
     {
         var values = new Dictionary<string, string>
@@ -44,6 +71,8 @@ public class GraphService
             $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token",
             new FormUrlEncodedContent(values)
         );
+
+        response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
         var token = JsonConvert.DeserializeObject<dynamic>(json);

@@ -10,5 +10,4 @@ public interface ILicenseService
 
     int SaveLicenseFromInputModel(SubscriptionInputModel model, int installationId);
 
-    void RemoveLicense(int licenseId);
 }

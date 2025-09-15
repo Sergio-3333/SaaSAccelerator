@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Marketplace.SaaS.Accelerator.Services.Models;
+﻿using Marketplace.SaaS.Accelerator.Services.Models;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.DataAccess;
 
@@ -7,18 +6,25 @@ namespace Marketplace.SaaS.Accelerator.Services.Contracts;
 
 public interface IClientsService
 {
-    // Consultas
-    IEnumerable<Clients> GetAllClients();
+    /// <summary>
+    /// Obtiene un cliente por su InstallationId.
+    /// </summary>
     Clients GetClientByInstallationId(int installationId);
+
+    /// <summary>
+    /// Obtiene un cliente por su LicenseId.
+    /// </summary>
     Clients GetClientByLicenseId(int licenseId);
+
+    /// <summary>
+    /// Obtiene un cliente por su email.
+    /// </summary>
     Clients GetClientByEmail(string email);
 
-    // Escenario 1: actualizar cliente existente
-    void UpdateExistingClientFromPurchase(SubscriptionInputModel subscription);
-
-    // Escenario 2: crear cliente nuevo
-    void CreateNewClientFromPurchase(SubscriptionInputModel subscription, int licenseId);
-
-    // (Opcional) Método unificado para compatibilidad con código antiguo
-    void CreateOrUpdateClientFromSubscription(SubscriptionInputModel subscription, int licenseId, int installationId);
+    /// <summary>
+    /// Crea o actualiza un cliente a partir de los datos recibidos de Microsoft.
+    /// Si el email existe, actualiza MicrosoftId, LicenseId, LicenseType e InstallationId.
+    /// Si no existe, crea un nuevo cliente con esos datos.
+    /// </summary>
+    void CreateOrUpdateClientFromSubscription(SubscriptionInputModel subscription);
 }

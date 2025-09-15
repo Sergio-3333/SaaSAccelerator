@@ -40,7 +40,7 @@ public class SubLinesRepository : ISubLinesRepository
         _context.SaveChanges();
     }
 
-    public IEnumerable<SubLines> GetByMicrosoftId(int microsoftId)
+    public IEnumerable<SubLines> GetByMicrosoftId(string microsoftId)
     {
         return _context.SubLines
             .Where(s => s.MicrosoftId == microsoftId)

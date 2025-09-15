@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure;
-using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 
@@ -41,17 +40,19 @@ public class FulfillmentApiService : IFulfillmentApiService
         return marketplaceClient.Fulfillment.GetSubscription(subscriptionId).Value;
     }
 
-    public async Task<Response> ActivateSubscriptionAsync(Subscriptions subscription)
+    public async Task<Response> ActivateSubscriptionAsync(Microsoft.Marketplace.SaaS.Models.Subscription subscription)
     {
-        var payload = new SubscriberPlan
+        var body = new SubscriberPlan
         {
-            PlanId = subscription.AMPPlanId,
-            Quantity = subscription.AMPQuantity,
+            PlanId = subscription.PlanId
         };
+        return await marketplaceClient.Fulfillment.ActivateSubscriptionAsync(
 
-        var subscriptionId = Guid.Parse(subscription.MicrosoftId);
+            subscriptionId: subscription.Id.Value,
+            body: body
+        );
 
-        return await marketplaceClient.Fulfillment.ActivateSubscriptionAsync(subscriptionId, payload);
+
     }
 
 

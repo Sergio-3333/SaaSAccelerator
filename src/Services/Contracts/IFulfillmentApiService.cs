@@ -21,7 +21,7 @@ public interface IFulfillmentApiService
 
     Task<List<Subscription>> GetAllSubscriptionAsync();
 
-    Task<Subscription> ResolveAsync(string token);
+    Task<ResolvedSubscriptionResult> ResolveAsync(string token);
 
     string GetSaaSAppURL();
 }

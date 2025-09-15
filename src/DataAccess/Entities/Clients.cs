@@ -6,7 +6,7 @@ public partial class Clients
 {
     public int InstallationID { get; set; } 
 
-    public int MicrosoftId { get; set; } 
+    public string MicrosoftId { get; set; } 
 
     public int LicenseID { get; set; } 
 

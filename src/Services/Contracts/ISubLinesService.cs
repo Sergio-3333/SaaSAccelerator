@@ -11,12 +11,7 @@ public interface ISubLinesService
     int CreateFromDataModel(SubscriptionInputModel model);
 
     /// <summary>
-    /// Crea una nueva línea de facturación a partir de una suscripción existente.
-    /// </summary>
-    int CreateFromSubscription(Subscriptions subscription, int quantity, int usersQ, decimal? amount);
-
-    /// <summary>
     /// Obtiene el histórico de sublíneas para un MicrosoftId.
     /// </summary>
-    IEnumerable<SubLines> GetHistoryByMicrosoftId(int microsoftId);
+    IEnumerable<SubLines> GetHistoryByMicrosoftId(string microsoftId);
 }

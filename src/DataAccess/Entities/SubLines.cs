@@ -7,7 +7,7 @@ public partial class SubLines
 {
     public int SubLinesId { get; set; }                      // Clave primaria
 
-    public int MicrosoftId { get; set; }                     // Relación con tabla Subscriptions
+    public String MicrosoftId { get; set; }                     // Relación con tabla Subscriptions
 
     public DateTime ChargeDate { get; set; }                 // Fecha de cargo mensual
 

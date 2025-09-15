@@ -1,95 +1,78 @@
 ﻿using System;
+using System.Collections.Generic;
+using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Models;
-
-namespace Marketplace.SaaS.Accelerator.Services.Services;
 
 public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionsRepository subscriptionRepository;
-    private readonly int currentUserId;
+    private readonly ISubLinesService subLinesService;
 
-    public SubscriptionService(ISubscriptionsRepository subscriptionRepo, int currentUserId = 0)
+    public SubscriptionService(
+        ISubscriptionsRepository subscriptionRepo,
+        ISubLinesService subLinesService)
     {
         this.subscriptionRepository = subscriptionRepo;
-        this.currentUserId = currentUserId;
+        this.subLinesService = subLinesService;
     }
 
-    public void UpdateStateOfSubscription(Guid subscriptionId, string status, bool isActivate)
+    public void CreateSubscription(SubscriptionInputModel model)
     {
-        subscriptionRepository.UpdateStatus(subscriptionId.ToString(), status, isActivate);
+        if (string.IsNullOrWhiteSpace(model.MicrosoftId))
+            throw new ArgumentException("MicrosoftId no puede estar vacío.");
+
+        // 1. Mapear y guardar suscripción
+        var entity = MapToEntity(model);
+        subscriptionRepository.AddSubscription(entity); // Usar Add en vez de Save para claridad
+
+        // 2. Crear línea de facturación con los datos enriquecidos
+        subLinesService.CreateFromDataModel(model);
     }
 
-    public SubscriptionResultExtension GetSubscriptionsBySubscriptionId(Guid subscriptionId, bool includeUnsubscribed = true)
+    public void UpdateSubscription(SubscriptionInputModel model)
     {
-        var subscriptionDetail = subscriptionRepository.GetByMicrosoftId(subscriptionId.ToString());
-        if (subscriptionDetail != null)
+        var existing = subscriptionRepository.GetSubscriptionByMicrosoftId(model.MicrosoftId);
+        if (existing == null)
+            throw new InvalidOperationException("La suscripción no existe.");
+
+        // Actualizar solo lo que corresponda
+        existing.SubscriptionStatus = model.Status;
+        existing.IsActive = model.IsActive;
+        existing.AMPPlanId = model.AMPPlanId;
+
+        subscriptionRepository.UpdateSubscription(existing);
+    }
+
+    public void UpdateStateOfSubscription(string microsoftId, string status, bool isActive)
+    {
+        subscriptionRepository.UpdateSubscriptionStatus(microsoftId, status, isActive);
+    }
+
+    public Subscriptions GetByMicrosoftId(string microsoftId)
+    {
+        return subscriptionRepository.GetSubscriptionByMicrosoftId(microsoftId);
+    }
+
+
+    private Subscriptions MapToEntity(SubscriptionInputModel model)
+    {
+        return new Subscriptions
         {
-            var subscritpionDetail = PrepareSubscriptionResponse(subscriptionDetail);
-            if (subscritpionDetail != null)
-            {
-                return subscritpionDetail;
-            }
-        }
-        return new SubscriptionResultExtension();
-    }
-
-    public SubscriptionResultExtension PrepareSubscriptionResponse(Subscriptions subscription)
-    {
-        var subscritpionDetail = new SubscriptionResultExtension
-        {
-            Id = Guid.Parse(subscription.MicrosoftId),
-            SubscribeId = subscription.Id,
-            PlanId = string.IsNullOrEmpty(subscription.AMPPlanId) ? string.Empty : subscription.AMPPlanId,
-            OfferId = subscription.AmpOfferId,
-            Term = new TermResult
-            {
-                StartDate = subscription.StartDate.GetValueOrDefault(),
-                EndDate = subscription.EndDate.GetValueOrDefault(),
-            },
-            Quantity = subscription.AMPQuantity,
-            Name = subscription.Name,
-            SubscriptionStatus = GetSubscriptionStatus(subscription.SubscriptionStatus),
-            IsActiveSubscription = subscription.IsActive ?? false,
-            CustomerEmailAddress = null,
-            CustomerName = null,
-            IsMeteringSupported = false
-        };
-
-        if (!Enum.TryParse<TermUnitEnum>(subscription.Term, out var termUnit))
-            termUnit = TermUnitEnum.P1M;
-        subscritpionDetail.Term.TermUnit = termUnit;
-
-        subscritpionDetail.Purchaser = new PurchaserResult
-        {
-            EmailId = subscription.PurchaserEmail,
-            TenantId = subscription.PurchaserTenantId ?? default
-        };
-
-        return subscritpionDetail;
-    }
-
-    public SubscriptionStatusEnumExtension GetSubscriptionStatus(string subscriptionStatus)
-    {
-        var parseSuccessfull = Enum.TryParse(subscriptionStatus, out SubscriptionStatusEnumExtension status);
-        return parseSuccessfull ? status : SubscriptionStatusEnumExtension.UnRecognized;
-    }
-
-    public void CreateSubscription(Subscriptions subscription)
-    {
-        subscription.Name = GetPlanName(subscription.AMPPlanId);
-        subscriptionRepository.Save(subscription);
-    }
-
-    private string GetPlanName(string ampPlanId)
-    {
-        return ampPlanId switch
-        {
-            "1" => "Standard",
-            "2" => "Business",
-            _ => "Unknown"
+            MicrosoftId = model.MicrosoftId,
+            SubscriptionStatus = model.Status,
+            AMPPlanId = model.AMPPlanId,
+            IsActive = model.IsActive,
+            UserId = model.UserId,
+            PurchaserEmail = model.PurchaserEmail,
+            PurchaserTenantId = model.PurchaserTenantId,
+            Term = model.Term,
+            StartDate = model.StartDate,
+            EndDate = model.EndDate,
+            AutoRenew = model.AutoRenew
         };
     }
 }
