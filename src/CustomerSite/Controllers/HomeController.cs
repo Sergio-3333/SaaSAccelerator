@@ -3,12 +3,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
+using Marketplace.Saas.Accelerator.Services.Services;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Exceptions;
 using Marketplace.SaaS.Accelerator.Services.Models;
@@ -20,6 +23,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Marketplace.SaaS.Models;
 
 namespace Marketplace.SaaS.Accelerator.CustomerSite.Controllers;
 
@@ -27,288 +31,144 @@ namespace Marketplace.SaaS.Accelerator.CustomerSite.Controllers;
 /// <seealso cref="BaseController"/>
 public class HomeController : BaseController
 {
-    /// <summary>
-    /// Defines the  API Client.
-    /// </summary>
     private readonly IFulfillmentApiService apiService;
+    private readonly ISubscriptionsRepository subscriptionsRepository;
+    private readonly IClientsRepository clientsRepository;
+    private readonly ILicensesRepository licensesRepository;
 
-    /// <summary>
-    /// The subscription repository..
-    /// </summary>
-    private readonly ISubscriptionsRepository subscriptionRepository;
+    private readonly LicenseService licenseService;
 
-    /// <summary>
-    /// The subscription logs repository.
-    /// </summary>
-    private readonly ISubscriptionLogRepository subscriptionLogRepository;
+    private readonly ISubscriptionStatusHandler unsubscribeStatusHandler;
+    private readonly ISubscriptionStatusHandler pendingActivationStatusHandler;
+    private readonly ISubscriptionStatusHandler pendingFulfillmentStatusHandler;
 
-    /// <summary>
-    /// The application log repository..
-    /// </summary>
-    private readonly IApplicationLogRepository applicationLogRepository;
-
-    /// <summary>
-    /// The plan repository.
-    /// </summary>
-    private readonly IPlansRepository planRepository;
-
-    /// <summary>
-    /// The plan repository.
-    /// </summary>
-    private readonly IOffersRepository offersRepository;
-
-    /// <summary>
-    /// The user repository.
-    /// </summary>
-    private readonly IUsersRepository userRepository;
-
-    private readonly SaaSClientLogger<HomeController> logger;
-
-    private readonly IApplicationConfigRepository applicationConfigRepository;
-
-    private readonly IEmailTemplateRepository emailTemplateRepository;
-
-    private readonly IPlanEventsMappingRepository planEventsMappingRepository;
-
-    private readonly IOfferAttributesRepository offerAttributesRepository;
-
-    private readonly IEventsRepository eventsRepository;
-
-    private readonly IEmailService emailService;
-
-    private readonly ISubscriptionStatusHandler pendingFulfillmentStatusHandlers;
-
-    private readonly ISubscriptionStatusHandler pendingActivationStatusHandlers;
-
-    private readonly ISubscriptionStatusHandler unsubscribeStatusHandlers;
-
-    private readonly ISubscriptionStatusHandler notificationStatusHandlers;
-
-    private readonly ApplicationConfigService applicationConfigService;
-
-    private readonly ILoggerFactory loggerFactory;
-
-    private readonly IWebNotificationService _webNotificationService;
-
-    private SubscriptionService subscriptionService = null;
-
-    private ApplicationLogService applicationLogService = null;
-
-    private PlanService planService = null;
-
-    /// <summary>
-    /// The user service.
-    /// </summary>
-    private UserService userService;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HomeController" /> class.
-    /// </summary>
-    /// <param name="logger">The logger.</param>
-    /// <param name="apiClient">The API Client<see cref="IFulfilmentApiClient" />.</param>
-    /// <param name="subscriptionRepo">The subscription repository.</param>
-    /// <param name="planRepository">The plan repository.</param>
-    /// <param name="userRepository">The user repository.</param>
-    /// <param name="applicationLogRepository">The application log repository.</param>
-    /// <param name="subscriptionLogsRepo">The subscription logs repository.</param>
-    /// <param name="applicationConfigRepository">The application configuration repository.</param>
-    /// <param name="emailTemplateRepository">The email template repository.</param>
-    /// <param name="offersRepository">The offers repository.</param>
-    /// <param name="planEventsMappingRepository">The plan events mapping repository.</param>
-    /// <param name="offerAttributesRepository">The offer attributes repository.</param>
-    /// <param name="eventsRepository">The events repository.</param>
-    /// <param name="cloudConfigs">The cloud configs.</param>
-    /// <param name="loggerFactory">The logger factory.</param>
-    /// <param name="emailService">The email service.</param>
     public HomeController(
-        SaaSClientLogger<HomeController> logger, 
-        IFulfillmentApiService apiService, 
-        ISubscriptionsRepository subscriptionRepo, 
-        IPlansRepository planRepository, 
-        IUsersRepository userRepository, 
-        IApplicationLogRepository applicationLogRepository, 
-        ISubscriptionLogRepository subscriptionLogsRepo, 
-        IApplicationConfigRepository applicationConfigRepository, 
-        IEmailTemplateRepository emailTemplateRepository, 
-        IOffersRepository offersRepository, 
-        IPlanEventsMappingRepository planEventsMappingRepository, 
-        IOfferAttributesRepository offerAttributesRepository, 
-        IEventsRepository eventsRepository, 
-        ILoggerFactory loggerFactory, 
-        IEmailService emailService,
-        IWebNotificationService webNotificationService,
-        IAppVersionService appVersionService) : base(appVersionService)
+        IFulfillmentApiService apiService,
+        ISubscriptionsRepository subscriptionsRepository,
+        IClientsRepository clientsRepository,
+        ILicensesRepository licensesRepository,
+        ISubscriptionStatusHandler unsubscribeStatusHandler,
+        ISubscriptionStatusHandler pendingActivationStatusHandler,
+        ISubscriptionStatusHandler pendingFulfillmentStatusHandler,
+        IAppVersionService appVersionService)
+        : base(appVersionService)
     {
         this.apiService = apiService;
-        this.subscriptionRepository = subscriptionRepo;
-        this.subscriptionLogRepository = subscriptionLogsRepo;
-        this.applicationLogRepository = applicationLogRepository;
-        this.planRepository = planRepository;
-        this.userRepository = userRepository;
-        this.userService = new UserService(this.userRepository);
-        this.subscriptionService = new SubscriptionService(this.subscriptionRepository, this.planRepository);
-        this.applicationLogService = new ApplicationLogService(this.applicationLogRepository);
-        this.applicationConfigRepository = applicationConfigRepository;
-        this.applicationConfigService = new ApplicationConfigService(this.applicationConfigRepository);
-        this.emailTemplateRepository = emailTemplateRepository;
-        this.planEventsMappingRepository = planEventsMappingRepository;
-        this.offerAttributesRepository = offerAttributesRepository;
-        this.logger = logger;
-        this.offersRepository = offersRepository;
-        this.planService = new PlanService(this.planRepository, this.offerAttributesRepository, this.offersRepository);
-        this.eventsRepository = eventsRepository;
-        this.emailService = emailService;
-        this.loggerFactory = loggerFactory;
-        this._webNotificationService = webNotificationService;
+        this.subscriptionsRepository = subscriptionsRepository;
+        this.clientsRepository = clientsRepository;
+        this.licensesRepository = licensesRepository;
 
-        this.pendingActivationStatusHandlers = new PendingActivationStatusHandler(
-            apiService,
-            subscriptionRepo,
-            subscriptionLogsRepo,
-            planRepository,
-            userRepository,
-            loggerFactory.CreateLogger<PendingActivationStatusHandler>());
-
-        this.pendingFulfillmentStatusHandlers = new PendingFulfillmentStatusHandler(
-            apiService,
-            applicationConfigRepository,
-            subscriptionRepo,
-            subscriptionLogsRepo,
-            planRepository,
-            userRepository,
-            this.loggerFactory.CreateLogger<PendingFulfillmentStatusHandler>());
-
-        this.notificationStatusHandlers = new NotificationStatusHandler(
-            apiService,
-            planRepository,
-            applicationConfigRepository,
-            emailTemplateRepository,
-            planEventsMappingRepository,
-            offerAttributesRepository,
-            eventsRepository,
-            subscriptionRepo,
-            userRepository,
-            offersRepository,
-            emailService,
-            this.loggerFactory.CreateLogger<NotificationStatusHandler>());
-
-        this.unsubscribeStatusHandlers = new UnsubscribeStatusHandler(
-            apiService,
-            subscriptionRepo,
-            subscriptionLogsRepo,
-            planRepository,
-            userRepository,
-            this.loggerFactory.CreateLogger<UnsubscribeStatusHandler>());
+        this.unsubscribeStatusHandler = unsubscribeStatusHandler;
+        this.pendingActivationStatusHandler = pendingActivationStatusHandler;
+        this.pendingFulfillmentStatusHandler = pendingFulfillmentStatusHandler;
     }
 
-    /// <summary>
-    /// Get All Subscription List for Current Logged in User.
-    /// </summary>
-    /// <param name="token">The MS Token<see cref="string" />..</param>
-    /// <returns>
-    /// The <see cref="IActionResult" />.
-    /// </returns>
+
     public async Task<IActionResult> Index(string token = null)
     {
         try
         {
-            this.logger.Info(HttpUtility.HtmlEncode($"Landing page with token {token}"));
-            SubscriptionResult subscriptionDetail = new SubscriptionResult();
             SubscriptionResultExtension subscriptionExtension = new SubscriptionResultExtension();
 
-            this.applicationConfigService.SaveFileToDisk("LogoFile", "contoso-sales.png");
-            this.applicationConfigService.SaveFileToDisk("FaviconFile", "favicon.ico");
-
-            if (this.User.Identity.IsAuthenticated)
+            if (User.Identity.IsAuthenticated)
             {
-                var userId = this.userService.AddUser(this.GetCurrentUserDetail());
-                var currentUserId = this.userService.GetUserIdFromEmailAddress(this.CurrentUserEmailAddress);
-                this.subscriptionService = new SubscriptionService(this.subscriptionRepository, this.planRepository, userId);
-                this.logger.Info("User authenticated successfully");
+                var userDetail = GetCurrentUserDetail();
+
                 if (!string.IsNullOrEmpty(token))
                 {
-                    this.TempData["ShowWelcomeScreen"] = null;
                     token = token.Replace(' ', '+');
-                    var newSubscription = await this.apiService.ResolveAsync(token).ConfigureAwait(false);
+                    var newSubscription = await apiService.ResolveAsync(token).ConfigureAwait(false);
+
                     if (newSubscription != null && newSubscription.SubscriptionId != default)
                     {
-                        Offers offers = new Offers()
+                        var subscriptionData = await apiService.GetSubscriptionByIdAsync(newSubscription.SubscriptionId).ConfigureAwait(false);
+                        // 1. Insertar o actualizar suscripción
+                        var subscription = new Subscriptions
                         {
-                            OfferId = newSubscription.OfferId,
-                            OfferName = newSubscription.OfferId,
-                            UserId = currentUserId,
-                            CreateDate = DateTime.Now,
-                            OfferGuid = Guid.NewGuid(),
+                            MicrosoftId = subscriptionData.Id.ToString(),
+                            SubscriptionStatus = subscriptionData.SaasSubscriptionStatus.ToString(),
+                            AMPPlanId = subscriptionData.PlanId,
+                            IsActive = true,
+                            CreateBy = null,
+                            CreateDate = DateTime.UtcNow,
+                            ModifyDate = null, 
+                            UserId = subscriptionData.Beneficiary.Puid.GetHashCode(),
+                            Name = subscriptionData.Name,
+                            AMPQuantity = subscriptionData.Quantity.GetHashCode(),
+                            PurchaserEmail = subscriptionData.Beneficiary.EmailId,
+                            PurchaserTenantId = subscriptionData.Beneficiary.TenantId.ToString(),
+                            AmpOfferId = subscriptionData.OfferId,
+                            Term = subscriptionData.Term.TermUnit.ToString(),
+                            StartDate = subscriptionData.Term?.StartDate?.DateTime,
+                            EndDate = subscriptionData.Term?.EndDate?.DateTime
                         };
-                        Guid newOfferId = this.offersRepository.Add(offers);
 
-                        var subscriptionPlanDetail = await this.apiService.GetAllPlansForSubscriptionAsync(newSubscription.SubscriptionId).ConfigureAwait(false);
-                        subscriptionPlanDetail.ForEach(x =>
+                        int subscriptionId = subscriptionsRepository.Save(subscription);
+
+
+                        // 2. Crear licencia
+                        var license = new LicenseResult
                         {
-                            x.OfferId = newOfferId;
-                            x.PlanGUID = Guid.NewGuid();
-                        });
-                        this.subscriptionService.AddUpdateAllPlanDetailsForSubscription(subscriptionPlanDetail);
+                            MicrosoftId = subscriptionData.Id.ToString(),
+                            LicenseKey = Guid.NewGuid().ToString(),
 
-                        var currentPlan = this.planRepository.GetById(newSubscription.PlanId);
-                        var subscriptionData = await this.apiService.GetSubscriptionByIdAsync(newSubscription.SubscriptionId).ConfigureAwait(false);
-                        var subscribeId = this.subscriptionService.AddOrUpdatePartnerSubscriptions(subscriptionData);
-                        if (subscribeId > 0 && subscriptionData.SaasSubscriptionStatus == SubscriptionStatusEnum.PendingFulfillmentStart)
-                        {
-                            SubscriptionAuditLogs auditLog = new SubscriptionAuditLogs()
-                            {
-                                Attribute = Convert.ToString(SubscriptionLogAttributes.Status),
-                                SubscriptionId = subscribeId,
-                                NewValue = SubscriptionStatusEnum.PendingFulfillmentStart.ToString(),
-                                OldValue = "None",
-                                CreateBy = currentUserId,
-                                CreateDate = DateTime.Now,
-                            };
-                            this.subscriptionLogRepository.Save(auditLog);
-                        }
+                            Email = subscriptionData.Purchaser.EmailId,
 
-                        subscriptionExtension = this.subscriptionService.GetSubscriptionsBySubscriptionId(newSubscription.SubscriptionId, true);
+                            Status = 1, // Activo
+
+                            WebOrderID = subscriptionData.WebOrderId,
+                            LicenseExpires = subscriptionData.Term?.EndDate?.ToString("yyyy-MM-dd"),
+
+                            LicensesStd = subscriptionData.PlanId.GetHashCode() == 1 ? 1 : 0,
+                            LicensesBiz = subscriptionData.PlanId.GetHashCode() == 1 ? 0 : 1
+                        };
+
+
+                        int licenseId = licenseService.SaveLicense(license);
+
+                        // 3. Generar installationId (temporal o real)
+                        int installationId = new Random().Next(1000, 9999); // o tu lógica real
+
+                        // 4. Insertar o actualizar cliente
+                        ClientsService.CreateOrUpdateClientFromSubscription(subscriptionData, licenseId, installationId);
+
+                        // 6. Preparar datos para la vista
+                        subscriptionExtension = subscriptionService.GetSubscriptionsBySubscriptionId(newSubscription.SubscriptionId, true);
                         subscriptionExtension.ShowWelcomeScreen = false;
-                        subscriptionExtension.CustomerEmailAddress = this.CurrentUserEmailAddress;
-                        subscriptionExtension.CustomerName = this.CurrentUserName;
-                        subscriptionExtension.SubscriptionParameters = this.subscriptionService.GetSubscriptionsParametersById(newSubscription.SubscriptionId, currentPlan.PlanGuid);
-                        subscriptionExtension.IsAutomaticProvisioningSupported = Convert.ToBoolean(this.applicationConfigRepository.GetValueByName("IsAutomaticProvisioningSupported"));
-                        subscriptionExtension.AcceptSubscriptionUpdates = Convert.ToBoolean(this.applicationConfigRepository.GetValueByName("AcceptSubscriptionUpdates"));
+                        subscriptionExtension.CustomerEmailAddress = userDetail.EmailAddress;
+                        subscriptionExtension.CustomerName = userDetail.FullName;
                     }
                 }
                 else
                 {
-                    this.TempData["ShowWelcomeScreen"] = "True";
+                    TempData["ShowWelcomeScreen"] = "True";
                     subscriptionExtension.ShowWelcomeScreen = true;
-                    return this.View(subscriptionExtension);
                 }
+
+                return View(subscriptionExtension);
             }
             else
             {
                 if (!string.IsNullOrEmpty(token))
                 {
-                    return this.Challenge(
-                        new AuthenticationProperties
-                        {
-                            RedirectUri = "/?token=" + token,
-                        }, OpenIdConnectDefaults.AuthenticationScheme);
+                    return Challenge(
+                        new AuthenticationProperties { RedirectUri = "/?token=" + token },
+                        OpenIdConnectDefaults.AuthenticationScheme);
                 }
-                else
-                {
-                    this.TempData["ShowWelcomeScreen"] = "True";
-                    subscriptionExtension.ShowWelcomeScreen = true;
-                    return this.View(subscriptionExtension);
-                }
-            }
 
-            return this.View(subscriptionExtension);
+                TempData["ShowWelcomeScreen"] = "True";
+                subscriptionExtension.ShowWelcomeScreen = true;
+                return View(subscriptionExtension);
+            }
         }
         catch (Exception ex)
         {
-            this.logger.LogError($"Message:{ex.Message} :: {ex.InnerException}   ");
-            return this.View("Error", ex);
+            logger.LogError($"Message:{ex.Message} :: {ex.InnerException}");
+            return View("Error", ex);
         }
     }
+
+
 
     /// <summary>
     /// Subscription this instance.

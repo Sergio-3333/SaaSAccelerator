@@ -16,6 +16,16 @@ public class LicensesRepository : ILicensesRepository
         _context = context;
     }
 
+    public int GetNextLicenseId()
+    {
+        var lastId = _context.Licenses
+            .OrderByDescending(l => l.LicenseID)
+            .Select(l => l.LicenseID)
+            .FirstOrDefault();
+
+        return lastId + 1;
+    }
+
     public int Save(Licenses license)
     {
         var existing = _context.Licenses
@@ -23,15 +33,22 @@ public class LicensesRepository : ILicensesRepository
 
         if (existing != null)
         {
+            // Datos de suscripción
             existing.MicrosoftId = license.MicrosoftId;
-            existing.Email = license.Email;
-            existing.Company = license.Company;
-            existing.Created = license.Created;
-            existing.LicenseExpires = license.LicenseExpires;
-            existing.PurchasedLicenses = license.PurchasedLicenses;
-            existing.Comment = license.Comment;
-            existing.Duration = license.Duration;
+            existing.LicenseKey = license.LicenseKey;
             existing.Status = license.Status;
+            existing.PurchasedLicenses = license.PurchasedLicenses;
+            existing.LicensesStd = license.LicensesStd;
+            existing.LicensesBiz = license.LicensesBiz;
+            existing.LicenseExpires = license.LicenseExpires;
+            existing.Created = license.Created;
+
+            // Datos enriquecidos desde Graph
+            existing.Company = license.Company;
+            existing.City = license.City;
+            existing.Name = license.Name;
+            existing.Email = license.Email;
+            existing.Phone = license.Phone;
 
             _context.Licenses.Update(existing);
             _context.SaveChanges();
@@ -60,4 +77,8 @@ public class LicensesRepository : ILicensesRepository
         _context.Licenses.Remove(entity);
         _context.SaveChanges();
     }
+
+    public Licenses GetByEmail(string email) =>
+    _context.Licenses.FirstOrDefault(l => l.Email == email);
+
 }

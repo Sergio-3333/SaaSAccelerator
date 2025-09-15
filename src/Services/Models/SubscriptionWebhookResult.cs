@@ -21,15 +21,6 @@ public class SubscriptionWebhookResult
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the identifier.
-    /// </summary>
-    /// <value>
-    /// The identifier.
-    /// </value>
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    /// <summary>
     /// Gets or sets the offer identifier.
     /// </summary>
     /// <value>
@@ -63,7 +54,7 @@ public class SubscriptionWebhookResult
     /// The subscription status.
     /// </value>
     [JsonPropertyName("saasSubscriptionStatus")]
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public SubscriptionStatusEnum SaasSubscriptionStatus { get; set; }
+    public string SaasSubscriptionStatus { get; set; }
+
 
 }

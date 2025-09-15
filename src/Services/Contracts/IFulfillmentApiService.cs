@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Azure;
-using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Microsoft.Marketplace.SaaS.Models;
 
 namespace Marketplace.SaaS.Accelerator.Services.Contracts;
@@ -16,13 +15,13 @@ public interface IFulfillmentApiService
     Task<Subscription> GetSubscriptionByIdAsync(Guid subscriptionId);
     Subscription GetSubscriptionById(Guid subscriptionId);
 
-    Task<Response> ActivateSubscriptionAsync(Subscriptions subscription);
+    Task<Response> ActivateSubscriptionAsync(Subscription subscription);
 
     Task<Response> PatchOperationStatusResultAsync(Guid subscriptionId, Guid operationId, UpdateOperationStatusEnum updateOperationStatus);
 
     Task<List<Subscription>> GetAllSubscriptionAsync();
 
-    Task<bool> DeleteSubscriptionAsync(Guid subscriptionId, string planId);
+    Task<Subscription> ResolveAsync(string token);
 
     string GetSaaSAppURL();
 }

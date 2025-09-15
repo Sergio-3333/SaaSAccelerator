@@ -107,6 +107,8 @@ public class Startup
         services.AddScoped<ISubscriptionService, SubscriptionService>();
         services.AddScoped<ILicensesRepository, LicensesRepository>();
         services.AddScoped<ILicenseService, LicenseService>();
+        services.AddHttpClient<IFulfillmentApiService, FulfillmentApiService>();
+
 
         // HomeController (si usas vistas)
         services.AddScoped<SaaSClientLogger<HomeController>>();

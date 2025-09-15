@@ -8,5 +8,7 @@ public interface IClientsRepository : IBaseRepository<Clients>
     Clients GetByInstallationId(int installationId);
     Clients GetByLicenseId(int licenseId);
     Clients GetByEmail(string email);
-    void CreateOrUpdateClientFromSubscription(Subscriptions subscription, int licenseId, int installationId);
+
+    void CreateClient(Clients clientEntity);
+    void UpdateClient(Clients clientEntity);
 }

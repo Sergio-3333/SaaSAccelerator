@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Marketplace.SaaS.Accelerator.DataAccess.Context;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
@@ -7,23 +6,23 @@ using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 
-    public class ClientsRepository : IClientsRepository
-     {
-        private readonly SaasKitContext _context;
+public class ClientsRepository : IClientsRepository
+{
+    private readonly SaasKitContext _context;
 
-        public ClientsRepository(SaasKitContext context)
-        {
-            _context = context;
-        }
+    public ClientsRepository(SaasKitContext context)
+    {
+        _context = context;
+    }
 
     public IEnumerable<Clients> Get()
     {
         return _context.Clients.ToList();
     }
 
-    public Clients Get(int id)
+    public Clients Get(int installationId)
     {
-        return _context.Clients.FirstOrDefault(c => c.InstallationID == id);
+        return _context.Clients.FirstOrDefault(c => c.InstallationID == installationId);
     }
 
     public int Save(Clients entity)
@@ -54,7 +53,7 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 
     public Clients GetByEmail(string email)
     {
-        return _context.Clients.FirstOrDefault(c => c.ContactInfoEmail == email);
+        return _context.Clients.FirstOrDefault(c => c.OWAEmail == email);
     }
 
     public Clients GetByInstallationId(int installationId)
@@ -62,39 +61,19 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
         return _context.Clients.FirstOrDefault(c => c.InstallationID == installationId);
     }
 
-    public void CreateOrUpdateClientFromSubscription(Subscriptions subscription, int licenseId, int installationId)
+    public void CreateClient(Clients clientEntity)
     {
-        var existingClient = GetByInstallationId(installationId);
-
-        if (existingClient != null)
-        {
-            existingClient.LicenseID = licenseId;
-            existingClient.ContactInfoEmail = subscription.PurchaserEmail;
-            existingClient.ContactInfoCompany = subscription.Name;
-            existingClient.UsageCounter = subscription.AMPQuantity;
-            existingClient.InternalNote = subscription.PurchaserTenantId;
-            existingClient.CampaignGUID = subscription.MicrosoftId?.ToString();
-            existingClient.LastAccessed = DateTime.UtcNow.ToString("yyyy-MM-dd");
-
-            Save(existingClient);
-        }
-        else
-        {
-            var newClient = new Clients
-            {
-                InstallationID = installationId,
-                LicenseID = licenseId,
-                ContactInfoEmail = subscription.PurchaserEmail,
-                ContactInfoCompany = subscription.Name,
-                UsageCounter = subscription.AMPQuantity,
-                InternalNote = subscription.PurchaserTenantId,
-                CampaignGUID = subscription.MicrosoftId?.ToString(),
-                Created = (subscription.StartDate ?? DateTime.UtcNow).ToString("yyyy-MM-dd")
-        };
-
-            Save(newClient);
-        }
+        _context.Clients.Add(clientEntity);
+        _context.SaveChanges();
     }
 
+    public void UpdateClient(Clients clientEntity)
+    {
+        var existing = GetByLicenseId(clientEntity.LicenseID);
+        if (existing != null)
+        {
+            _context.Entry(existing).CurrentValues.SetValues(clientEntity);
+            _context.SaveChanges();
+        }
+    }
 }
-

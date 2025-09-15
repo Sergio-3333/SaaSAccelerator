@@ -8,4 +8,8 @@ public interface ILicensesRepository : IBaseRepository<Licenses>
   int Save(Licenses license);
   Licenses GetByLicenseKey(string licenseKey);
   IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
+  public Licenses GetByEmail(string email);
+   int GetNextLicenseId();
+
+
 }

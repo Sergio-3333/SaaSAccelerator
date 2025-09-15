@@ -18,6 +18,9 @@ public class SubscriptionsRepository : ISubscriptionsRepository
 
     public int Save(Subscriptions subscription)
     {
+        if (string.IsNullOrWhiteSpace(subscription.MicrosoftId))
+            throw new ArgumentException("MicrosoftId no puede estar vacío.");
+
         var existing = _context.Subscriptions
             .FirstOrDefault(s => s.MicrosoftId == subscription.MicrosoftId);
 
@@ -25,32 +28,36 @@ public class SubscriptionsRepository : ISubscriptionsRepository
         {
             existing.SubscriptionStatus = subscription.SubscriptionStatus;
             existing.AMPPlanId = subscription.AMPPlanId;
-            existing.AMPQuantity = subscription.AMPQuantity;
-            existing.AmpOfferId = subscription.AmpOfferId;
+            existing.IsActive = subscription.IsActive;
+            existing.UserId = subscription.UserId;
+            existing.PurchaserEmail = subscription.PurchaserEmail;
+            existing.PurchaserTenantId = subscription.PurchaserTenantId;
             existing.Term = subscription.Term;
             existing.StartDate = subscription.StartDate;
             existing.EndDate = subscription.EndDate;
-            existing.Name = subscription.Name;
-            existing.PurchaserEmail = subscription.PurchaserEmail;
-            existing.PurchaserTenantId = subscription.PurchaserTenantId;
-            existing.ModifyDate = DateTime.UtcNow;
+            existing.AutoRenew = subscription.AutoRenew;
 
             _context.Subscriptions.Update(existing);
             _context.SaveChanges();
-            return existing.Id;
+
+            // Como la PK es string, devolvemos 0 o cambiamos la interfaz para devolver string
+            return 0;
         }
 
-        subscription.CreateDate = DateTime.UtcNow;
         _context.Subscriptions.Add(subscription);
         _context.SaveChanges();
-        return subscription.Id;
+
+        return 0;
     }
 
-    public Subscriptions Get(int id) =>
-        _context.Subscriptions.FirstOrDefault(s => s.Id == id);
+    public Subscriptions Get(int id)
+    {
+        // Ya no tiene sentido buscar por int, la PK es string
+        throw new NotSupportedException("Subscriptions usa MicrosoftId como clave primaria.");
+    }
 
     public IEnumerable<Subscriptions> Get() =>
-        _context.Subscriptions.OrderByDescending(s => s.CreateDate);
+        _context.Subscriptions.ToList();
 
     public Subscriptions GetByMicrosoftId(string microsoftId) =>
         _context.Subscriptions.FirstOrDefault(s => s.MicrosoftId == microsoftId);

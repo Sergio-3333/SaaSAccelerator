@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
-using Marketplace.SaaS.Accelerator.Services.Models;
-
-namespace Marketplace.SaaS.Accelerator.Services.Contracts;
+﻿using Marketplace.SaaS.Accelerator.DataAccess;
+using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+using System.Collections.Generic;
 
 public interface ILicenseService
 {
-    LicenseResult GetLicenseById(int licenseId);
-    LicenseResult GetByLicenseKey(string licenseKey);
-    IEnumerable<LicenseResult> GetByMicrosoftId(string microsoftId);
-    int SaveLicense(LicenseResult license);
+    Licenses GetLicenseById(int licenseId);
+    Licenses GetByLicenseKey(string licenseKey);
+    IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
+
+    int SaveLicenseFromInputModel(SubscriptionInputModel model, int installationId);
+
     void RemoveLicense(int licenseId);
 }

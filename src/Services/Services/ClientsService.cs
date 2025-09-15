@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
+using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Models;
 
@@ -11,76 +11,86 @@ namespace Marketplace.SaaS.Accelerator.Services.Services;
 public class ClientsService : IClientsService
 {
     private readonly IClientsRepository clientsRepository;
+    private readonly ILicensesRepository licensesRepository;
 
-    public ClientsService(IClientsRepository clientsRepository)
+    public ClientsService(IClientsRepository clientsRepository, ILicensesRepository licensesRepository)
     {
         this.clientsRepository = clientsRepository;
+        this.licensesRepository = licensesRepository;
     }
 
-    public IEnumerable<ClientModel> GetAllClients()
+    // Consultas
+    public IEnumerable<Clients> GetAllClients()
     {
-        return clientsRepository.Get()
-            .Select(c => MapToModel(c))
-            .ToList();
+        return clientsRepository.Get();
     }
 
-    public ClientModel GetClientByInstallationId(int installationId)
+    public Clients GetClientByInstallationId(int installationId)
     {
-        var client = clientsRepository.GetByInstallationId(installationId);
-        return client != null ? MapToModel(client) : null;
+        return clientsRepository.GetByInstallationId(installationId);
     }
 
-    public ClientModel GetClientByLicenseId(int licenseId)
+    public Clients GetClientByLicenseId(int licenseId)
     {
-        var client = clientsRepository.GetByLicenseId(licenseId);
-        return client != null ? MapToModel(client) : null;
+        return clientsRepository.GetByLicenseId(licenseId);
     }
 
-    public ClientModel GetClientByEmail(string email)
+    public Clients GetClientByEmail(string email)
     {
-        var client = clientsRepository.GetByEmail(email);
-        return client != null ? MapToModel(client) : null;
+        return clientsRepository.GetByEmail(email);
     }
 
-    public void CreateOrUpdateClientFromSubscription(SubscriptionModel subscription, int licenseId, int installationId)
+    // Escenario 1: actualizar cliente existente
+    public void UpdateExistingClientFromPurchase(SubscriptionInputModel subscription)
     {
-        var subscriptionEntity = new DataAccess.Entities.Subscriptions
+        var license = licensesRepository.GetByEmail(subscription.PurchaserEmail);
+        if (license == null)
+            throw new InvalidOperationException($"No se encontró licencia para {subscription.PurchaserEmail}");
+
+        var client = clientsRepository.GetByLicenseId(license.LicenseID);
+        if (client == null)
+            throw new InvalidOperationException($"No se encontró cliente para LicenseId {license.LicenseID}");
+
+        client.LicenseType = subscription.AMPPlanId == "Ant Text 365 Standart" ? 1 : 2;
+        client.MicrosoftId = subscription.MicrosoftId.GetHashCode();
+        client.LicenseID = license.LicenseID;
+
+        clientsRepository.UpdateClient(client);
+    }
+
+    // Escenario 2: crear cliente nuevo
+    public void CreateNewClientFromPurchase(SubscriptionInputModel subscription, int licenseId)
+    {
+        int installationId = GenerateInstallationId();
+
+        var clientEntity = new Clients
         {
-            PurchaserEmail = subscription.PurchaserEmail,
-            Name = subscription.Name,
-            AMPQuantity = subscription.Quantity ?? 0,
-            PurchaserTenantId = subscription.PurchaserTenantId,
-            MicrosoftId = subscription.MicrosoftId,
-            StartDate = subscription.StartDate
+            InstallationID = installationId,
+            LicenseID = licenseId,
+            MicrosoftId = subscription.MicrosoftId.GetHashCode(),
+            OWAEmail = subscription.PurchaserEmail,
+            LicenseType = subscription.AMPPlanId == "Ant Text 365 Standart" ? 1 : 2
         };
 
-        clientsRepository.CreateOrUpdateClientFromSubscription(subscriptionEntity, licenseId, installationId);
+        clientsRepository.CreateClient(clientEntity);
     }
 
-    private ClientModel MapToModel(DataAccess.Entities.Clients entity)
+    // Método unificado para compatibilidad
+    public void CreateOrUpdateClientFromSubscription(SubscriptionInputModel subscription, int licenseId, int installationId)
     {
-        return new ClientModel
+        var existingClient = clientsRepository.GetByInstallationId(installationId);
+        if (existingClient != null)
         {
-            InstallationID = entity.InstallationID,
-            LicenseID = entity.LicenseID,
-            ContactInfoEmail = entity.ContactInfoEmail,
-            ContactInfoCompany = entity.ContactInfoCompany,
-            UsageCounter = entity.UsageCounter,
-            InternalNote = entity.InternalNote,
-            CampaignGUID = entity.CampaignGUID,
-            Created = FormatDateString(entity.Created),
-            LastAccessed = FormatDateString(entity.LastAccessed)
-        };
-    }
-
-    private string FormatDateString(string dateString)
-    {
-        if (DateTime.TryParse(dateString, out var date))
-        {
-            return date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            UpdateExistingClientFromPurchase(subscription);
         }
-
-        return dateString;
+        else
+        {
+            CreateNewClientFromPurchase(subscription, licenseId);
+        }
     }
 
+    private int GenerateInstallationId()
+    {
+        return new Random().Next(100000, 999999);
+    }
 }
