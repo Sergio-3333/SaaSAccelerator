@@ -24,9 +24,7 @@ public class GraphService
         _config = config;
     }
 
-    /// <summary>
     /// Enriquecer un SubscriptionInputModel con datos del usuario principal del tenant.
-    /// </summary>
     public async Task<SubscriptionInputModel> EnrichWithGraphAsync(SubscriptionInputModel model)
     {
         if (string.IsNullOrWhiteSpace(model.PurchaserTenantId))
@@ -46,13 +44,17 @@ public class GraphService
 
         if (primaryUser != null)
         {
-            // Solo sobrescribimos si el campo está vacío en el modelo original
             model.Name ??= primaryUser.displayName;
             model.PurchaserEmail ??= primaryUser.mail;
+            model.Email ??= primaryUser.userPrincipalName;
+            model.Phone ??= primaryUser.mobilePhone;
+            model.Company ??= primaryUser.companyName;
+            model.City ??= primaryUser.officeLocation;
         }
 
         return model;
     }
+
 
     /// <summary>
     /// Obtiene un token de acceso para Microsoft Graph usando client_credentials.

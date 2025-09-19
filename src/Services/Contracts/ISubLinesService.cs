@@ -5,13 +5,9 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Services;
 
 public interface ISubLinesService
 {
-    /// <summary>
-    /// Crea una nueva línea de facturación a partir de un DataModel completo.
-    /// </summary>
+    // Creates a new billing subline from a complete subscription input model.
     int CreateFromDataModel(SubscriptionInputModel model);
 
-    /// <summary>
-    /// Obtiene el histórico de sublíneas para un MicrosoftId.
-    /// </summary>
+    // Retrieves billing history (sublines) for a given MicrosoftId.
     IEnumerable<SubLines> GetHistoryByMicrosoftId(string microsoftId);
 }

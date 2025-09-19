@@ -1,54 +1,37 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE file in the project root for license information.
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Marketplace.SaaS.Accelerator.Services.Exceptions;
-using Marketplace.SaaS.Accelerator.Services.Models;
+﻿using System;
+using Marketplace.SaaS.Accelerator.DataAccess;
 using Microsoft.Marketplace.SaaS.Models;
 
 namespace Marketplace.SaaS.Accelerator.Services.Helpers;
 
-static class ConversionHelper
+// Converts Microsoft Subscription model into your internal SubscriptionInputModel.
+public static class ConversionHelper
 {
-
-    public static SubscriptionResult subscriptionResult(this Subscription subscription)
+    public static SubscriptionInputModel ToInputModel(this Subscription subscription)
     {
-        var subscriptionResult = new SubscriptionResult()
+        if (subscription == null)
+            throw new ArgumentNullException(nameof(subscription));
+
+        return new SubscriptionInputModel
         {
-            Id = subscription.Id ?? throw new MarketplaceException("Subscription Id cannot be null"),
-            PublisherId = subscription.PublisherId,
-            OfferId = subscription.OfferId,
-            Name = subscription.Name,
-            SaasSubscriptionStatus = (Models.SubscriptionStatusEnum)Enum.Parse(typeof(Models.SubscriptionStatusEnum), subscription.SaasSubscriptionStatus.ToString()),
-            PlanId = subscription.PlanId,
-            Quantity = subscription.Quantity ?? 0,
-            Purchaser = new PurchaserResult()
+            MicrosoftId = subscription.Id?.ToString() ?? throw new Exception("Subscription Id is required"),
+            Status = subscription.SaasSubscriptionStatus.ToString(),
+            AMPPlanId = subscription.PlanId,
+            IsActive = subscription.SaasSubscriptionStatus.ToString() switch
             {
-                EmailId = subscription.Purchaser.EmailId,
-                ObjectId = subscription.Purchaser.ObjectId?.ToString() ?? throw new MarketplaceException("Purchaser ObjectId cannot be null"),
-                TenantId = subscription.Purchaser.TenantId?.ToString() ?? throw new MarketplaceException("Purchaser Tenant Id cannot be null"),
+                "Subscribed" => true,
+                _ => false
             },
-            Beneficiary = new BeneficiaryResult()
-            {
-                EmailId = subscription.Beneficiary.EmailId ?? throw new MarketplaceException("Beneficiary Email Id cannot be null"),
-                ObjectId = subscription.Beneficiary.ObjectId ?? throw new MarketplaceException("Beneficiary Object Id cannot be null"),
-                TenantId = subscription.Beneficiary.TenantId ?? throw new MarketplaceException("Beneficiary Tenant Id cannot be null"),
-            },
-            Term = new TermResult()
-            {
-                TermUnit = subscription.Term.TermUnit.HasValue ? (Models.TermUnitEnum)subscription.Term.TermUnit :         Models.TermUnitEnum.P1M,
-                StartDate = subscription.Term.StartDate ?? default(DateTimeOffset),
-                EndDate = subscription.Term.EndDate ?? default(DateTimeOffset),
-            }
+            PurchaserEmail = subscription.Purchaser?.EmailId,
+            PurchaserTenantId = subscription.Purchaser?.TenantId?.ToString(),
+            Term = subscription.Term?.TermUnit?.ToString(),
+            StartDate = subscription.Term?.StartDate?.UtcDateTime,
+            EndDate = subscription.Term?.EndDate?.UtcDateTime,
+            AutoRenew = subscription.AutoRenew,
+            ChargeDate = DateTime.UtcNow,
+            AMPlan = subscription.PlanId,
+            UsersQ = subscription.Quantity ?? 0,
+
         };
-        return subscriptionResult;
     }
-
-    public static List<SubscriptionResult> subscriptionResultList(this List<Subscription> subscriptions) 
-    {
-        return subscriptions.Select(x => x.subscriptionResult()).ToList();
-    }
-
 }

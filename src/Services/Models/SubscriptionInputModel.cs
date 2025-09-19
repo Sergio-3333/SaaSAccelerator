@@ -72,10 +72,8 @@ public class SubscriptionInputModel
     [JsonPropertyName("planName")] // o "amPlan"
     public string AMPlan { get; set; }
 
-    [JsonPropertyName("quantity")]
-    public int Quantity { get; set; }
 
-    [JsonPropertyName("usersQuantity")] // o "usersQ"
+    [JsonPropertyName("Quantity")] // o "usersQ"
     public int UsersQ { get; set; }
 
     [JsonPropertyName("country")]

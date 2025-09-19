@@ -81,7 +81,7 @@ public class WebhookPayload
     /// </value>
     [JsonPropertyName("status")]
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public OperationStatusEnum Status { get; set; }
+    public SubscriptionStatusEnum Status { get; set; }
 
     /// <summary>
     /// Gets or sets the subscription identifier.

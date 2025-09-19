@@ -7,15 +7,13 @@ public partial class SubLines
 {
     public int SubLinesId { get; set; }                      // Clave primaria
 
-    public String MicrosoftId { get; set; }                     // Relación con tabla Subscriptions
+    public string MicrosoftId { get; set; }                     // Relación con tabla Subscriptions
 
     public DateTime ChargeDate { get; set; }                 // Fecha de cargo mensual
 
     public bool Status { get; set; }                         // Activo/Inactivo
 
     public string AMPlan { get; set; }                       // Plan adquirido
-
-    public int Quantity { get; set; }                        // Cantidad de planes comprados
 
     public int UsersQ { get; set; }                          // Número de usuarios
 

@@ -4,15 +4,22 @@ using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using System.Linq;
 using System;
 
+// Repository for the Subscriptions entity.
+// Handles creation, updates, and retrieval of subscription records.
+// Uses EF Core to interact with the SaasKitContext database.
+
 public class SubscriptionsRepository : ISubscriptionsRepository
 {
     private readonly SaasKitContext _context;
 
+    // Constructor that injects the database context.
     public SubscriptionsRepository(SaasKitContext context)
     {
         _context = context;
     }
 
+    // Adds a new subscription to the database.
+    // Returns the MicrosoftId of the newly created subscription.
     public string AddSubscription(Subscriptions subscription)
     {
         _context.Subscriptions.Add(subscription);
@@ -20,21 +27,26 @@ public class SubscriptionsRepository : ISubscriptionsRepository
         return subscription.MicrosoftId;
     }
 
+    // Updates an existing subscription based on MicrosoftId.
+    // Throws an exception if the subscription does not exist.
     public void UpdateSubscription(Subscriptions subscription)
     {
         var existing = _context.Subscriptions
             .FirstOrDefault(s => s.MicrosoftId == subscription.MicrosoftId);
 
         if (existing == null)
-            throw new InvalidOperationException("La suscripción no existe.");
+            throw new InvalidOperationException("Subscription does not exist.");
 
         _context.Entry(existing).CurrentValues.SetValues(subscription);
         _context.SaveChanges();
     }
 
+    // Retrieves a subscription by its MicrosoftId.
     public Subscriptions GetSubscriptionByMicrosoftId(string microsoftId) =>
         _context.Subscriptions.FirstOrDefault(s => s.MicrosoftId == microsoftId);
 
+    // Updates the status and active flag of a subscription by MicrosoftId.
+    // If the subscription exists, applies the changes and saves.
     public void UpdateSubscriptionStatus(string microsoftId, string status, bool isActive)
     {
         var existing = _context.Subscriptions.FirstOrDefault(s => s.MicrosoftId == microsoftId);

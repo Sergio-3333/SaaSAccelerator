@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
-using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Models;
 using Microsoft.Extensions.Logging;
@@ -19,57 +17,55 @@ public class PendingFulfillmentStatusHandler : AbstractSubscriptionStatusHandler
         ISubscriptionsRepository subscriptionsRepository,
         ILicensesRepository licensesRepository,
         IClientsRepository clientsRepository,
+        ISubLinesRepository subLinesRepository,
         ILogger<PendingFulfillmentStatusHandler> logger)
-        : base(subscriptionsRepository, licensesRepository, clientsRepository)
+        : base(subscriptionsRepository, licensesRepository, clientsRepository, subLinesRepository)
     {
         this.fulfillmentApiService = fulfillApiService;
         this.logger = logger;
     }
 
-    public override void Process(Guid subscriptionID)
+    // Handles transition from PendingFulfillmentStart to PendingActivation
+    public override async Task ProcessAsync(Guid subscriptionID)
     {
-        ProcessAsync(subscriptionID).GetAwaiter().GetResult();
-    }
+        logger?.LogInformation("Processing PendingFulfillment for subscription: {SubscriptionId}", subscriptionID);
 
-    public async Task ProcessAsync(Guid subscriptionID)
-    {
-        logger?.LogInformation("Procesando PendingFulfillment para suscripción: {0}", subscriptionID);
-
+        // Retrieve subscription from local repository
         var subscription = GetSubscriptionByMicrosoftId(subscriptionID);
         if (subscription == null)
         {
-            logger?.LogWarning("Suscripción no encontrada: {0}", subscriptionID);
+            logger?.LogWarning("Subscription not found: {SubscriptionId}", subscriptionID);
             return;
         }
 
-        logger?.LogInformation("Suscripción encontrada con plan: {0}", JsonSerializer.Serialize(subscription.AMPPlanId));
+        logger?.LogInformation("Subscription found with plan: {PlanId}", subscription.AMPPlanId);
 
-        if (subscription.SubscriptionStatus == SubscriptionStatusEnumExtension.PendingFulfillmentStart.ToString())
+        // Skip if subscription is not in PendingFulfillmentStart state
+        if (!string.Equals(subscription.SubscriptionStatus, SubscriptionStatusEnum.PendingFulfillmentStart.ToString(), StringComparison.OrdinalIgnoreCase))
         {
-            try
-            {
-                subscriptionsRepository.UpdateStatus(
-                    subscriptionID.ToString(),
-                    SubscriptionStatusEnumExtension.PendingActivation.ToString(),
-                    true
-                );
-
-                logger?.LogInformation("Estado actualizado a PendingActivation para suscripción: {0}", subscriptionID);
-            }
-            catch (Exception ex)
-            {
-                logger?.LogError("Error al actualizar estado de suscripción {0}: {1}", subscriptionID, ex.Message);
-
-                subscriptionsRepository.UpdateStatus(
-                    subscriptionID.ToString(),
-                    SubscriptionStatusEnumExtension.PendingActivation.ToString(),
-                    true
-                );
-            }
+            logger?.LogInformation("Subscription is not in PendingFulfillmentStart state: {Status}", subscription.SubscriptionStatus);
+            return;
         }
-        else
+
+        try
         {
-            logger?.LogInformation("La suscripción no está en estado PendingFulfillmentStart: {0}", subscription.SubscriptionStatus);
+            // Optionally validate current status from Microsoft Marketplace
+            var remoteSubscription = await fulfillmentApiService.GetSubscriptionByIdAsync(subscriptionID);
+            logger?.LogInformation("Remote status from Microsoft: {Status}", remoteSubscription?.SaasSubscriptionStatus);
+
+            // Update local subscription status to PendingActivation
+            subscriptionsRepository.UpdateSubscriptionStatus(
+                subscriptionID.ToString(),
+                SubscriptionStatusEnum.PendingActivation.ToString(),
+                true
+            );
+
+            logger?.LogInformation("Status updated to PendingActivation for subscription: {SubscriptionId}", subscriptionID);
+        }
+        catch (Exception ex)
+        {
+            // Log error and preserve current state
+            logger?.LogError(ex, "Error updating subscription status {SubscriptionId}", subscriptionID);
         }
     }
 }

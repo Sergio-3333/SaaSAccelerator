@@ -7,24 +7,15 @@ namespace Marketplace.SaaS.Accelerator.Services.Contracts;
 
 public interface ISubscriptionService
 {
-    /// <summary>
-    /// Crea una nueva suscripción a partir de los datos recibidos de Microsoft.
-    /// </summary>
+    // Creates a new subscription using data received from Microsoft.
     void CreateSubscription(SubscriptionInputModel model);
 
-    /// <summary>
-    /// Actualiza una suscripción existente con datos recibidos de Microsoft.
-    /// </summary>
+    // Updates an existing subscription with new data from Microsoft.
     void UpdateSubscription(SubscriptionInputModel model);
 
-    /// <summary>
-    /// Actualiza únicamente el estado y el flag de activo de una suscripción.
-    /// </summary>
+    // Updates only the status and active flag of a subscription.
     void UpdateStateOfSubscription(string microsoftId, string status, bool isActive);
 
-    /// <summary>
-    /// Obtiene una suscripción por su MicrosoftId.
-    /// </summary>
+    // Retrieves a subscription by its MicrosoftId.
     Subscriptions GetByMicrosoftId(string microsoftId);
-
 }

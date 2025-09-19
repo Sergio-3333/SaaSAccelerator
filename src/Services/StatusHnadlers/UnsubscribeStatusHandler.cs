@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
-using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Models;
 using Microsoft.Extensions.Logging;
@@ -19,59 +17,60 @@ public class UnsubscribeStatusHandler : AbstractSubscriptionStatusHandler
         ISubscriptionsRepository subscriptionsRepository,
         ILicensesRepository licensesRepository,
         IClientsRepository clientsRepository,
+        ISubLinesRepository subLinesRepository,
         ILogger<UnsubscribeStatusHandler> logger)
-        : base(subscriptionsRepository, licensesRepository, clientsRepository)
+        : base(subscriptionsRepository, licensesRepository, clientsRepository, subLinesRepository)
     {
         this.fulfillmentApiService = fulfillApiService;
         this.logger = logger;
     }
 
-    public override void Process(Guid subscriptionID)
+    // Handles the unsubscribe flow for subscriptions in PendingUnsubscribe state
+    public override async Task ProcessAsync(Guid subscriptionID)
     {
-        ProcessAsync(subscriptionID).GetAwaiter().GetResult();
-    }
+        logger?.LogInformation("Processing Unsubscribe for subscription: {SubscriptionId}", subscriptionID);
 
-    public async Task ProcessAsync(Guid subscriptionID)
-    {
-        logger?.LogInformation("Procesando Unsubscribe para suscripción: {0}", subscriptionID);
-
+        // Retrieve subscription from local repository
         var subscription = GetSubscriptionByMicrosoftId(subscriptionID);
         if (subscription == null)
         {
-            logger?.LogWarning("Suscripción no encontrada: {0}", subscriptionID);
+            logger?.LogWarning("Subscription not found: {SubscriptionId}", subscriptionID);
             return;
         }
 
-        logger?.LogInformation("Suscripción encontrada con plan: {0}", JsonSerializer.Serialize(subscription.AMPPlanId));
+        logger?.LogInformation("Subscription found with plan: {PlanId}", subscription.AMPPlanId);
 
-        if (subscription.SubscriptionStatus == SubscriptionStatusEnumExtension.PendingUnsubscribe.ToString())
+        // Skip if subscription is not in PendingUnsubscribe state
+        if (!string.Equals(subscription.SubscriptionStatus, SubscriptionStatusEnum.PendingUnsubscribe.ToString(), StringComparison.OrdinalIgnoreCase))
         {
-            try
-            {
-                await fulfillmentApiService.DeleteSubscriptionAsync(subscriptionID, subscription.AMPPlanId);
-
-                subscriptionsRepository.UpdateStatus(
-                    subscriptionID.ToString(),
-                    SubscriptionStatusEnumExtension.Unsubscribed.ToString(),
-                    false
-                );
-
-                logger?.LogInformation("Suscripción marcada como Unsubscribed: {0}", subscriptionID);
-            }
-            catch (Exception ex)
-            {
-                logger?.LogError("Error al desuscribir {0}: {1}", subscriptionID, ex.Message);
-
-                subscriptionsRepository.UpdateStatus(
-                    subscriptionID.ToString(),
-                    SubscriptionStatusEnumExtension.UnsubscribeFailed.ToString(),
-                    true
-                );
-            }
+            logger?.LogInformation("Subscription is not in PendingUnsubscribe state: {Status}", subscription.SubscriptionStatus);
+            return;
         }
-        else
+
+        try
         {
-            logger?.LogInformation("La suscripción no está en estado PendingUnsubscribe: {0}", subscription.SubscriptionStatus);
+            // Cancel subscription via Fulfillment API
+            await fulfillmentApiService.CancelSubscriptionAsync(subscriptionID);
+
+            // Mark subscription as Unsubscribed and inactive
+            subscriptionsRepository.UpdateSubscriptionStatus(
+                subscriptionID.ToString(),
+                SubscriptionStatusEnum.Unsubscribed.ToString(),
+                false
+            );
+
+            logger?.LogInformation("Subscription marked as Unsubscribed: {SubscriptionId}", subscriptionID);
+        }
+        catch (Exception ex)
+        {
+            // Log error and mark subscription as UnsubscribeFailed
+            logger?.LogError(ex, "Error unsubscribing subscription {SubscriptionId}", subscriptionID);
+
+            subscriptionsRepository.UpdateSubscriptionStatus(
+                subscriptionID.ToString(),
+                SubscriptionStatusEnum.UnsubscribeFailed.ToString(),
+                true
+            );
         }
     }
 }

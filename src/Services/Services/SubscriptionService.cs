@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Marketplace.SaaS.Accelerator.DataAccess;
+﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
-using Marketplace.SaaS.Accelerator.Services.Models;
+using System;
 
 public class SubscriptionService : ISubscriptionService
 {
@@ -20,26 +18,28 @@ public class SubscriptionService : ISubscriptionService
         this.subLinesService = subLinesService;
     }
 
+    // Creates a new subscription and its corresponding billing line
     public void CreateSubscription(SubscriptionInputModel model)
     {
         if (string.IsNullOrWhiteSpace(model.MicrosoftId))
-            throw new ArgumentException("MicrosoftId no puede estar vacío.");
+            throw new ArgumentException("MicrosoftId cannot be empty.");
 
-        // 1. Mapear y guardar suscripción
+        // Map input model to entity and persist subscription
         var entity = MapToEntity(model);
-        subscriptionRepository.AddSubscription(entity); // Usar Add en vez de Save para claridad
+        subscriptionRepository.AddSubscription(entity);
 
-        // 2. Crear línea de facturación con los datos enriquecidos
+        // Create billing line based on enriched input data
         subLinesService.CreateFromDataModel(model);
     }
 
+    // Updates an existing subscription with new status and plan
     public void UpdateSubscription(SubscriptionInputModel model)
     {
         var existing = subscriptionRepository.GetSubscriptionByMicrosoftId(model.MicrosoftId);
         if (existing == null)
-            throw new InvalidOperationException("La suscripción no existe.");
+            throw new InvalidOperationException("Subscription does not exist.");
 
-        // Actualizar solo lo que corresponda
+        // Update only relevant fields
         existing.SubscriptionStatus = model.Status;
         existing.IsActive = model.IsActive;
         existing.AMPPlanId = model.AMPPlanId;
@@ -47,17 +47,19 @@ public class SubscriptionService : ISubscriptionService
         subscriptionRepository.UpdateSubscription(existing);
     }
 
+    // Updates subscription status and active flag directly
     public void UpdateStateOfSubscription(string microsoftId, string status, bool isActive)
     {
         subscriptionRepository.UpdateSubscriptionStatus(microsoftId, status, isActive);
     }
 
+    // Retrieves a subscription by its Microsoft ID
     public Subscriptions GetByMicrosoftId(string microsoftId)
     {
         return subscriptionRepository.GetSubscriptionByMicrosoftId(microsoftId);
     }
 
-
+    // Maps SubscriptionInputModel to Subscriptions entity
     private Subscriptions MapToEntity(SubscriptionInputModel model)
     {
         return new Subscriptions
@@ -68,11 +70,4 @@ public class SubscriptionService : ISubscriptionService
             IsActive = model.IsActive,
             UserId = model.UserId,
             PurchaserEmail = model.PurchaserEmail,
-            PurchaserTenantId = model.PurchaserTenantId,
-            Term = model.Term,
-            StartDate = model.StartDate,
-            EndDate = model.EndDate,
-            AutoRenew = model.AutoRenew
-        };
-    }
-}
+            PurchaserTenantId = model.PurchaserTenant

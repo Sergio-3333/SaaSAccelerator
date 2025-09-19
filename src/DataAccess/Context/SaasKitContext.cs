@@ -61,8 +61,7 @@ public partial class SaasKitContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Subscriptions>(entity =>
-        {
+        modelBuilder.Entity<Subscriptions>(entity => {
             entity.ToTable("Subscriptions");
             entity.HasKey(e => e.MicrosoftId);
 
@@ -74,13 +73,16 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.Term).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.StartDate).HasColumnType("datetime2");
             entity.Property(e => e.EndDate).HasColumnType("datetime2");
+            entity.Property(e => e.IsActive).IsRequired(false);
+            entity.Property(e => e.UserId).IsRequired(false);
+            entity.Property(e => e.AutoRenew).IsRequired(false);
         });
 
-        modelBuilder.Entity<Licenses>(entity =>
-        {
-            entity.ToTable("Licenses");
-            entity.HasKey(e => e.LicenseID);
 
+        modelBuilder.Entity<Licenses>(entity => {
+            entity.ToTable("Licenses");
+
+            entity.HasKey(e => e.LicenseID);
             entity.Property(e => e.MicrosoftId).HasMaxLength(36).IsUnicode(false);
             entity.Property(e => e.LicenseKey).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Company).HasMaxLength(50).IsUnicode(false);
@@ -90,19 +92,30 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Created).HasMaxLength(16).IsUnicode(false);
             entity.Property(e => e.LicenseExpires).HasMaxLength(16).IsUnicode(false);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.PurchasedLicenses).IsRequired();
+            entity.Property(e => e.LicensesStd).IsRequired(false);
+            entity.Property(e => e.LicensesBiz).IsRequired(false);
+
+            entity.HasMany(e => e.Clients).WithOne(c => c.License).HasForeignKey(c => c.LicenseID).OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<Clients>(entity =>
-        {
+
+        modelBuilder.Entity<Clients>(entity => {
             entity.ToTable("Clients");
             entity.HasKey(e => e.InstallationID);
 
+            entity.Property(e => e.MicrosoftId).HasMaxLength(36).IsUnicode(false);
             entity.Property(e => e.OWAEmail).HasMaxLength(100).IsUnicode(false);
+
+            entity.Property(e => e.LicenseType).IsRequired(false);
 
             entity.HasOne(c => c.License)
                   .WithMany(l => l.Clients)
-                  .HasForeignKey(c => c.LicenseID);
+                  .HasForeignKey(c => c.LicenseID)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
+
 
         modelBuilder.Entity<SubLines>(entity =>
         {
@@ -113,7 +126,6 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.ChargeDate).HasColumnType("date");
             entity.Property(e => e.Status).IsRequired();
             entity.Property(e => e.AMPlan).HasMaxLength(100).IsUnicode(false);
-            entity.Property(e => e.Quantity).IsRequired();
             entity.Property(e => e.UsersQ).IsRequired();
             entity.Property(e => e.Country).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.Currency).HasMaxLength(10).IsUnicode(false);

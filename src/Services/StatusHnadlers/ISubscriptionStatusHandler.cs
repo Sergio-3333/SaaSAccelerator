@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Marketplace.SaaS.Accelerator.Services.StatusHandlers;
 
@@ -11,5 +12,5 @@ public interface ISubscriptionStatusHandler
     /// Processes the specified subscription identifier.
     /// </summary>
     /// <param name="subscriptionID">The subscription identifier.</param>
-    void Process(Guid subscriptionID);
+    Task ProcessAsync(Guid subscriptionId);
 }

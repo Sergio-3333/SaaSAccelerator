@@ -15,28 +15,38 @@ public class ClientsService : IClientsService
         this.licenseService = licenseService;
     }
 
+    // Retrieves a client using the installation ID
     public Clients GetClientByInstallationId(int installationId) =>
         clientsRepository.GetByInstallationId(installationId);
 
+    // Retrieves a client using the license ID
     public Clients GetClientByLicenseId(int licenseId) =>
         clientsRepository.GetByLicenseId(licenseId);
 
+    // Retrieves a client using their email address
     public Clients GetClientByEmail(string email) =>
         clientsRepository.GetByEmail(email);
 
+    // Creates or updates a client based on subscription data
     public void CreateOrUpdateClientFromSubscription(SubscriptionInputModel model)
     {
         if (string.IsNullOrWhiteSpace(model.PurchaserEmail))
-            throw new ArgumentException("El email del cliente no puede estar vacío.");
+            throw new ArgumentException("Client email cannot be empty.");
 
         var existingClient = clientsRepository.GetByEmail(model.PurchaserEmail);
 
+        // Determine license type based on AMP plan
         int licenseType = ConvertLicenseType(model.AMPPlanId);
+
+        // Generate a unique installation ID based on current timestamp
         int installationId = GenerateInstallationId();
+
+        // Save license and get its ID
         int licenseId = licenseService.SaveLicenseFromInputModel(model, licenseType);
 
         if (existingClient != null)
         {
+            // Update existing client with new subscription details
             existingClient.MicrosoftId = model.MicrosoftId;
             existingClient.LicenseID = licenseId;
             existingClient.LicenseType = licenseType;
@@ -46,6 +56,7 @@ public class ClientsService : IClientsService
         }
         else
         {
+            // Create a new client record
             var newClient = new Clients
             {
                 OWAEmail = model.PurchaserEmail,
@@ -59,14 +70,16 @@ public class ClientsService : IClientsService
         }
     }
 
+    // Maps AMP plan name to internal license type ID
     private int ConvertLicenseType(string microsoftPlanId) =>
         microsoftPlanId switch
         {
             "Ant Text 365 Standart" => 1,
-            "Ant Text 365 Premium" => 2,
-            _ => throw new InvalidOperationException("Plan no reconocido")
+            "Ant Text 365 Bussiness" => 2,
+            _ => throw new InvalidOperationException("Unrecognized plan")
         };
 
+    // Generates a numeric installation ID based on current UTC timestamp
     private int GenerateInstallationId() =>
         (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 }
