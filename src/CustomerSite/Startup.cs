@@ -1,6 +1,7 @@
 
 using Marketplace.SaaS.Accelerator.DataAccess.Context;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
+using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
@@ -23,41 +24,42 @@ public class Startup
 
     public IConfiguration Configuration { get; }
 
-    public void ConfigureServices(IServiceCollection services)
+public void ConfigureServices(IServiceCollection services)
+{
+    // Configuración Fulfillment API
+    var config = new SaaSApiClientConfiguration
     {
-        // Configuración Fulfillment API
-        var config = new SaaSApiClientConfiguration
-        {
-            ClientId = Configuration["SaaSApiConfiguration:ClientId"],
-            ClientSecret = Configuration["SaaSApiConfiguration:ClientSecret"],
-            TenantId = Configuration["SaaSApiConfiguration:TenantId"],
-            FulFillmentAPIBaseURL = Configuration["SaaSApiConfiguration:FulFillmentAPIBaseURL"],
-            FulFillmentAPIVersion = Configuration["SaaSApiConfiguration:FulFillmentAPIVersion"],
-            Resource = Configuration["SaaSApiConfiguration:Resource"],
-            SaaSAppUrl = Configuration["SaaSApiConfiguration:SaaSAppUrl"]
-        };
+        ClientId = Configuration["SaaSApiConfiguration:ClientId"],
+        ClientSecret = Configuration["SaaSApiConfiguration:ClientSecret"],
+        TenantId = Configuration["SaaSApiConfiguration:TenantId"],
+        FulFillmentAPIBaseURL = Configuration["SaaSApiConfiguration:FulFillmentAPIBaseURL"],
+        FulFillmentAPIVersion = Configuration["SaaSApiConfiguration:FulFillmentAPIVersion"],
+        Resource = Configuration["SaaSApiConfiguration:Resource"],
+        SaaSAppUrl = Configuration["SaaSApiConfiguration:SaaSAppUrl"]
+    };
 
-        services.AddSingleton(config);
-        services.AddHttpClient<IFulfillmentApiService, FulfillmentApiService>();
+    services.AddSingleton(config);
+    services.AddHttpClient<IFulfillmentApiService, FulfillmentApiService>();
 
-        // DbContext y repositorios
-        services.AddDbContext<SaasKitContext>(options =>
-            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+    // DbContext y repositorios
+    services.AddDbContext<SaasKitContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddScoped<IClientsRepository, ClientsRepository>();
-        services.AddScoped<ISubscriptionsRepository, SubscriptionsRepository>();
-        services.AddScoped<ILicensesRepository, LicensesRepository>();
-        services.AddScoped<ISubLinesRepository, SubLinesRepository>();
+    services.AddScoped<IClientsRepository, ClientsRepository>();
+    services.AddScoped<ISubscriptionsRepository, SubscriptionsRepository>();
+    services.AddScoped<ILicensesRepository, LicensesRepository>();
+    services.AddScoped<ISubLinesRepository, SubLinesRepository>();
 
-        // Servicios de negocio
-        services.AddScoped<ClientsService>();
-        services.AddScoped<SubscriptionService>();
-        services.AddScoped<LicenseService>();
-        services.AddScoped<SubLinesService>();
+    // Servicios de negocio (registrar interfaces con implementaciones)
+    services.AddScoped<IClientsService, ClientsService>();
+    services.AddScoped<ISubscriptionService, SubscriptionService>();
+    services.AddScoped<ILicenseService, LicenseService>();
+    services.AddScoped<ISubLinesService, SubLinesService>();
 
-        // Solo controladores (sin vistas)
-        services.AddControllers();
-    }
+    // Solo controladores (sin vistas)
+    services.AddControllers();
+}
+
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
