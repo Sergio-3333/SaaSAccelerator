@@ -1,8 +1,10 @@
 ﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 public class LicenseService : ILicenseService
 {
@@ -14,23 +16,27 @@ public class LicenseService : ILicenseService
     }
 
     // Retrieves a license by its internal ID
-    public Licenses GetLicenseById(int licenseId) =>
-        licenseRepository.GetById(licenseId);
+    public Licenses GetLicenseById(SubscriptionInputModel model) =>
+        licenseRepository.GetById(model.LicenseId);
+
 
     // Retrieves a license using its unique license key
     public Licenses GetByLicenseKey(string licenseKey) =>
         licenseRepository.GetByLicenseKey(licenseKey);
 
+
     // Retrieves all licenses associated with a given Microsoft ID
     public IEnumerable<Licenses> GetByMicrosoftId(string microsoftId) =>
         licenseRepository.GetByMicrosoftId(microsoftId);
+
 
     // Retrieves a license using the purchaser's email
     public Licenses GetByEmail(string email) =>
         licenseRepository.GetByEmail(email);
 
+
     // Creates or updates a license using data from SubscriptionInputModel
-    public int SaveLicenseFromInputModel(SubscriptionInputModel model, int installationId)
+    public int SaveLicenseFromInputModel(SubscriptionInputModel model)
     {
         // Determine license type based on AMP plan
         int? licensesStd;
@@ -48,13 +54,12 @@ public class LicenseService : ILicenseService
         }
 
         // Generate a new license ID and license key
-        int newLicenseId = licenseRepository.GetNextLicenseId();
-        string newLicenseKey = Guid.NewGuid().ToString("N").ToUpper();
+        string newLicenseKey = GenerateUniqueLicenseKey();
 
         // Build license entity from input model
         var license = new Licenses
         {
-            LicenseID = newLicenseId,
+            LicenseID = model.LicenseId,
             MicrosoftId = model.MicrosoftId,
             LicenseKey = newLicenseKey,
             Company = model.Company,
@@ -85,4 +90,42 @@ public class LicenseService : ILicenseService
             return licenseRepository.CreateLicense(license);
         }
     }
+
+    public string GenerateUniqueLicenseKey()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        var random = new Random();
+        string key;
+
+        do
+        {
+            int length = random.Next(13, 18);
+            var sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++)
+                sb.Append(chars[random.Next(chars.Length)]);
+
+            key = sb.ToString();
+        }
+        while (licenseRepository.ExistsLicenseKey(key));
+
+        return key;
+    }
+
+
+    public int GenerateUniqueLicenseId()
+    {
+        var random = new Random();
+        int licenseId;
+
+        do
+        {
+            licenseId = random.Next(100000, 999999);
+        }
+        while (licenseRepository.ExistsLicenseId(licenseId));
+
+        return licenseId;
+    }
+
+
+
 }

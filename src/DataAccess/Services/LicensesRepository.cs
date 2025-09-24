@@ -69,4 +69,14 @@ public class LicensesRepository : ILicensesRepository
     // Retrieves a license by the purchaser's email.
     public Licenses GetByEmail(string email) =>
         _context.Licenses.FirstOrDefault(l => l.Email == email);
+
+    public bool ExistsLicenseId(int id)
+    {
+        return _context.Licenses.Any(l => l.LicenseID == id);
+    }
+
+    public bool ExistsLicenseKey(string key)
+    {
+        return _context.Licenses.Any(l => l.LicenseKey == key);
+    }
 }

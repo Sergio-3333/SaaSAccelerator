@@ -11,7 +11,7 @@ public partial class SubLines
 
     public DateTime ChargeDate { get; set; }                 // Fecha de cargo mensual
 
-    public bool Status { get; set; }                         // Activo/Inactivo
+    public int Status { get; set; }                         // Activo/Inactivo
 
     public string AMPlan { get; set; }                       // Plan adquirido
 

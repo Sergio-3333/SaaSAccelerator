@@ -28,8 +28,6 @@ public class SubscriptionService : ISubscriptionService
         var entity = MapToEntity(model);
         subscriptionRepository.AddSubscription(entity);
 
-        // Create billing line based on enriched input data
-        subLinesService.CreateFromDataModel(model);
     }
 
     // Updates an existing subscription with new status and plan
@@ -70,4 +68,15 @@ public class SubscriptionService : ISubscriptionService
             IsActive = model.IsActive,
             UserId = model.UserId,
             PurchaserEmail = model.PurchaserEmail,
-            PurchaserTenantId = model.PurchaserTenant
+            PurchaserTenantId = model.PurchaserTenantId,
+            AutoRenew = model.AutoRenew,
+            Term = model.Term,
+            StartDate = model.StartDate,
+            EndDate = model.EndDate
+
+        };
+
+    }
+
+}
+            

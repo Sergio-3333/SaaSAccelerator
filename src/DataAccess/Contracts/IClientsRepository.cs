@@ -6,7 +6,7 @@ public interface IClientsRepository
 {
     Clients GetByInstallationId(int installationId);
     Clients GetByLicenseId(int licenseId);
-    Clients GetByEmail(string email);
+    Clients GetByEmail(string OWAEmail);
 
     void CreateClient(Clients clientEntity);
     void UpdateClient(Clients clientEntity);

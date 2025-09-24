@@ -35,8 +35,8 @@ public interface ILicensesRepository
     /// </summary>
     Licenses GetByEmail(string email);
 
-    /// <summary>
-    /// Devuelve el siguiente LicenseId disponible.
-    /// </summary>
-    int GetNextLicenseId();
+    bool ExistsLicenseId(int id);
+    bool ExistsLicenseKey(string key);
+
+
 }

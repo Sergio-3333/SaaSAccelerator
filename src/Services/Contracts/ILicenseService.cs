@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public interface ILicenseService
 {
     // Returns a license by its ID.
-    Licenses GetLicenseById(int licenseId);
+    Licenses GetLicenseById(SubscriptionInputModel model);
 
     // Returns a license by its license key.
     Licenses GetByLicenseKey(string licenseKey);
@@ -14,5 +14,5 @@ public interface ILicenseService
     IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
 
     // Creates or updates a license using subscription input and links it to an installation.
-    int SaveLicenseFromInputModel(SubscriptionInputModel model, int installationId);
+    int SaveLicenseFromInputModel(SubscriptionInputModel model);
 }

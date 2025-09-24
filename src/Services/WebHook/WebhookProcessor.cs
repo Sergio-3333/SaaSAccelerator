@@ -1,4 +1,5 @@
-﻿using Marketplace.SaaS.Accelerator.Services.Configurations;
+﻿using Marketplace.SaaS.Accelerator.DataAccess;
+using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.WebHook;
 using Microsoft.Extensions.Logging;
@@ -21,67 +22,56 @@ public class WebhookProcessor : IWebhookProcessor
         this.logger = logger;
     }
 
-    // Processes incoming webhook notifications and routes them to the appropriate handler
-    public async Task ProcessWebhookNotificationAsync(WebhookPayload payload, SaaSApiClientConfiguration config)
+    /// <summary>
+    /// Procesa las notificaciones entrantes del webhook y las envía al handler correspondiente.
+    /// </summary>
+    public async Task ProcessWebhookNotificationAsync(SubscriptionInputModel model, SaaSApiClientConfiguration config)
     {
-        // Ignore null payloads
-        if (payload == null)
+        if (model == null)
         {
-            logger.LogWarning("Webhook payload is null. Ignoring request.");
+            logger.LogWarning("Webhook model is null. Ignoring request.");
             return;
         }
 
-        // Log basic payload metadata
         logger.LogInformation(
-            "Processing webhook: Action={Action}, SubscriptionId={SubscriptionId}, OperationId={OperationId}",
-            payload.Action, payload.SubscriptionId, payload.OperationId);
+            "Processing webhook: Action={Action}, MicrosoftId={MicrosoftId}, Plan={AMPlan}",
+            model.Action, model.MicrosoftId, model.AMPlan);
 
         try
         {
-            // Route webhook to the correct handler based on action type
-            switch (payload.Action)
+            switch (model.Action)
             {
                 case WebhookAction.Unsubscribe:
-                    await webhookHandler.UnsubscribedAsync(payload);
-                    break;
-
-                case WebhookAction.ChangePlan:
-                    await webhookHandler.ChangePlanAsync(payload);
+                    await webhookHandler.UnsubscribedAsync(model);
                     break;
 
                 case WebhookAction.ChangeQuantity:
-                    await webhookHandler.ChangeQuantityAsync(payload);
+                    await webhookHandler.ChangeQuantityAsync(model);
                     break;
 
                 case WebhookAction.Suspend:
-                    await webhookHandler.SuspendedAsync(payload);
-                    break;
-
-                case WebhookAction.Reinstate:
-                    await webhookHandler.ReinstatedAsync(payload);
+                    await webhookHandler.SuspendedAsync(model);
                     break;
 
                 case WebhookAction.Renew:
-                    await webhookHandler.RenewedAsync(payload);
+                    await webhookHandler.RenewedAsync(model);
                     break;
 
                 case WebhookAction.Transfer:
-                    await webhookHandler.UnknownActionAsync(payload); // Transfer not explicitly handled
+                    await webhookHandler.UnknownActionAsync(model); // Transfer no manejado explícitamente
                     break;
 
                 default:
-                    // Log and route unknown actions to fallback handler
-                    logger.LogWarning("Unknown webhook action: {Action}", payload.Action);
-                    await webhookHandler.UnknownActionAsync(payload);
+                    logger.LogWarning("Unknown webhook action: {Action}", model.Action);
+                    await webhookHandler.UnknownActionAsync(model);
                     break;
             }
         }
         catch (Exception ex)
         {
-            // Log error and propagate exception
             logger.LogError(ex,
-                "Error processing webhook for SubscriptionId={SubscriptionId}",
-                payload.SubscriptionId);
+                "Error processing webhook for MicrosoftId={MicrosoftId}",
+                model.MicrosoftId);
             throw;
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Exceptions;
@@ -32,7 +33,7 @@ public class AzureWebhookController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post(WebhookPayload request)
+    public async Task<IActionResult> Post(SubscriptionInputModel model)
     {
         try
         {
@@ -50,15 +51,15 @@ public class AzureWebhookController : ControllerBase
                 }
             }
 
-            if (request == null)
+            if (model == null)
             {
                 return BadRequest("Request payload is null.");
             }
 
-            var json = JsonSerializer.Serialize(request);
+            var json = JsonSerializer.Serialize(model);
             Console.WriteLine($"Webhook received: {json}");
 
-            await webhookProcessor.ProcessWebhookNotificationAsync(request, configuration);
+            await webhookProcessor.ProcessWebhookNotificationAsync(model, configuration);
             return Ok();
         }
         catch (MarketplaceException ex)

@@ -23,13 +23,13 @@ public class SubLinesService : ISubLinesService
         var subLine = new SubLines
         {
             MicrosoftId = model.MicrosoftId,
-            ChargeDate = model.ChargeDate,
-            Status = true, // Always marks the subline as active
+            ChargeDate = DateTime.UtcNow,
+            Status = 1, 
             AMPlan = model.AMPlan,
             UsersQ = model.UsersQ,
             Country = model.Country,
             Currency = model.Currency,
-            Amount = model.Amount ?? 0 // Defaults to 0 if null
+            Amount = model.Amount ?? 0 
         };
 
         return subLinesRepository.Save(subLine);

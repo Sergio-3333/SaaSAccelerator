@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using Marketplace.SaaS.Accelerator.Services.Models.Attributes;
+using Marketplace.SaaS.Accelerator.Services.WebHook;
 
 
 namespace Marketplace.SaaS.Accelerator.DataAccess;
@@ -11,6 +12,8 @@ public class SubscriptionInputModel
 
     [JsonPropertyName("id")] // o "subscriptionId" según el payload
     public string MicrosoftId { get; set; }
+
+    public int LicenseId { get; set;  }
 
     [JsonPropertyName("saasSubscriptionStatus")]
     public string Status { get; set; }
@@ -43,6 +46,10 @@ public class SubscriptionInputModel
     [JsonPropertyName("autoRenew")]
     public bool? AutoRenew { get; set; }
 
+    [JsonPropertyName("action")]
+    public WebhookAction Action { get; set; }
+
+
 
 
     // --- Datos enriquecidos desde Graph API (para Licenses/Clients) ---
@@ -67,7 +74,7 @@ public class SubscriptionInputModel
     // --- Datos para la línea de facturación (tabla SubLines) ---
 
     [JsonPropertyName("chargeDate")]
-    public DateTime ChargeDate { get; set; }
+    public DateTime? ChargeDate { get; set; }
 
     [JsonPropertyName("planName")] // o "amPlan"
     public string AMPlan { get; set; }
