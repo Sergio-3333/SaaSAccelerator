@@ -219,10 +219,9 @@ public class HomeController : Controller
     public IActionResult Landing(SubscriptionInputModel model)
     {
         logger.LogInformation($"Landing post-compra para Tenant: {model.PurchaserTenantId}");
-
-        // Pasamos directamente el modelo recibido a la vista
-        return View("LandingPage", model);
+        return Redirect("https://www.anttext.com/");
     }
+
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

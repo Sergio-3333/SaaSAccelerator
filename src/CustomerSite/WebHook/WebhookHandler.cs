@@ -1,363 +1,161 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE file in the project root for license information.
-
-using System;
-using System.Threading.Tasks;
+﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
-using Marketplace.SaaS.Accelerator.DataAccess.Entities;
-using Marketplace.SaaS.Accelerator.Services.Contracts;
-using Marketplace.SaaS.Accelerator.Services.Exceptions;
-using Marketplace.SaaS.Accelerator.Services.Models;
-using Marketplace.SaaS.Accelerator.Services.Services;
-using Marketplace.SaaS.Accelerator.Services.StatusHandlers;
+using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.WebHook;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
-namespace Marketplace.SaaS.Accelerator.CustomerSite.WebHook;
-
-/// <summary>
-/// Handler For the WebHook Actions.
-/// </summary>
-/// <seealso cref="Microsoft.Marketplace.SaasKit.WebHook.IWebhookHandler" />
-public class WebHookHandler : IWebhookHandler
+public class WebhookHandler : IWebhookHandler
 {
-    /// <summary>
-    /// The application log repository.
-    /// </summary>
-    private readonly IApplicationLogRepository applicationLogRepository;
+    private readonly ISubscriptionsRepository subscriptionRepository;
+    private readonly ILicensesRepository licensesRepository;
+    private readonly ISubLinesRepository subLinesRepository;
+    private readonly SubLinesService subLinesService;
 
-    /// <summary>
-    /// The subscriptions repository.
-    /// </summary>
-    private readonly ISubscriptionsRepository subscriptionsRepository;
 
-    /// <summary>
-    /// The plan repository.
-    /// </summary>
-    private readonly IPlansRepository planRepository;
+    private readonly ILogger<WebhookHandler> logger;
 
-    /// <summary>
-    /// The subscription service.
-    /// </summary>
-    private readonly SubscriptionService subscriptionService;
-
-    /// <summary>
-    /// The application log service.
-    /// </summary>
-    private readonly ApplicationLogService applicationLogService;
-
-    /// <summary>
-    /// The application configuration repository.
-    /// </summary>
-    private readonly IApplicationConfigRepository applicationConfigRepository;
-
-    /// <summary>
-    /// The email template repository.
-    /// </summary>
-    private readonly IEmailTemplateRepository emailTemplateRepository;
-
-    /// <summary>
-    /// The plan events mapping repository.
-    /// </summary>
-    private readonly IPlanEventsMappingRepository planEventsMappingRepository;
-
-    /// <summary>
-    /// The events repository.
-    /// </summary>
-    private readonly IEventsRepository eventsRepository;
-
-    /// <summary>
-    /// The fulfill API client.
-    /// </summary>
-    private readonly IFulfillmentApiService fulfillApiService;
-
-    /// <summary>
-    /// The users repository.
-    /// </summary>
-    private readonly IUsersRepository usersRepository;
-
-    /// <summary>
-    /// The subscriptions log repository.
-    /// </summary>
-    private readonly ISubscriptionLogRepository subscriptionsLogRepository;
-
-    private readonly ISubscriptionStatusHandler notificationStatusHandlers;
-
-    private readonly ILoggerFactory loggerFactory;
-
-    private readonly IEmailService emailService;
-
-    private readonly IOffersRepository offersRepository;
-
-    private readonly IOfferAttributesRepository offersAttributeRepository;
-
-    private const string AcceptSubscriptionUpdates = "AcceptSubscriptionUpdates";
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="WebHookHandler" /> class.
-    /// </summary>
-    /// <param name="applicationLogRepository">The application log repository.</param>
-    /// <param name="subscriptionsLogRepository">The subscriptions log repository.</param>
-    /// <param name="subscriptionsRepository">The subscriptions repository.</param>
-    /// <param name="planRepository">The plan repository.</param>
-    /// <param name="offersAttributeRepository">The offers attribute repository.</param>
-    /// <param name="offersRepository">The offers repository.</param>
-    /// <param name="fulfillApiClient">The fulfill API client.</param>
-    /// <param name="usersRepository">The users repository.</param>
-    /// <param name="loggerFactory">The logger factory.</param>
-    /// <param name="emailService">The email service.</param>
-    /// <param name="eventsRepository">The events repository.</param>
-    /// <param name="applicationConfigRepository">The application configuration repository.</param>
-    /// <param name="emailTemplateRepository">The email template repository.</param>
-    /// <param name="planEventsMappingRepository">The plan events mapping repository.</param>
-    public WebHookHandler(IApplicationLogRepository applicationLogRepository, 
-                          ISubscriptionLogRepository subscriptionsLogRepository, 
-                          ISubscriptionsRepository subscriptionsRepository, 
-                          IPlansRepository planRepository, 
-                          IOfferAttributesRepository offersAttributeRepository, 
-                          IOffersRepository offersRepository, 
-                          IFulfillmentApiService fulfillApiService, 
-                          IUsersRepository usersRepository, 
-                          ILoggerFactory loggerFactory, 
-                          IEmailService emailService, 
-                          IEventsRepository eventsRepository, 
-                          IApplicationConfigRepository applicationConfigRepository, 
-                          IEmailTemplateRepository emailTemplateRepository, 
-                          IPlanEventsMappingRepository planEventsMappingRepository)
+    public WebhookHandler(ISubscriptionsRepository subscriptionRepository, ILogger<WebhookHandler> logger)
     {
-        this.applicationLogRepository = applicationLogRepository;
-        this.subscriptionsRepository = subscriptionsRepository;
-        this.planRepository = planRepository;
-        this.subscriptionsLogRepository = subscriptionsLogRepository;
-        this.applicationLogService = new ApplicationLogService(this.applicationLogRepository);
-        this.subscriptionService = new SubscriptionService(this.subscriptionsRepository, this.planRepository);
-        this.emailService = emailService;
-        this.loggerFactory = loggerFactory;
-        this.usersRepository = usersRepository;
-        this.eventsRepository = eventsRepository;
-        this.offersAttributeRepository = offersAttributeRepository;
-        this.fulfillApiService = fulfillApiService;
-        this.applicationConfigRepository = applicationConfigRepository;
-        this.emailTemplateRepository = emailTemplateRepository;
-        this.planEventsMappingRepository = planEventsMappingRepository;
-        this.offersRepository = offersRepository;
-        this.notificationStatusHandlers = new NotificationStatusHandler(
-            fulfillApiService,
-            planRepository,
-            applicationConfigRepository,
-            emailTemplateRepository,
-            planEventsMappingRepository,
-            offersAttributeRepository,
-            eventsRepository,
-            subscriptionsRepository,
-            usersRepository,
-            offersRepository,
-            emailService,
-            this.loggerFactory.CreateLogger<NotificationStatusHandler>());
+        this.subscriptionRepository = subscriptionRepository;
+        this.logger = logger;
     }
 
-    /// <summary>
-    /// Changes the plan asynchronous.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task ChangePlanAsync(WebhookPayload payload)
+    public async Task FulfillmentStartedAsync(SubscriptionInputModel model)
     {
-        var oldValue = this.subscriptionService.GetSubscriptionsBySubscriptionId(payload.SubscriptionId);
-        SubscriptionAuditLogs auditLog = new SubscriptionAuditLogs()
-        {
-            Attribute = Convert.ToString(SubscriptionLogAttributes.Plan),
-            SubscriptionId = oldValue?.SubscribeId,
-            OldValue = oldValue?.PlanId,
-            CreateBy = null,
-            CreateDate = DateTime.Now,
-        };
+        logger.LogInformation($"[Webhook] Activando automáticamente suscripción {model.MicrosoftId}");
 
-        // we reject if the config value is set to false and the old plan is not the same as the new plan.
-        // if the old plan is the same as new plan then its a REVERT webhook scenario where we have to accept the change.
-        // we also reject if the subscription is not in the DB
-        var _acceptSubscriptionUpdates = Convert.ToBoolean(this.applicationConfigRepository.GetValueByName(AcceptSubscriptionUpdates));
-        if ((!_acceptSubscriptionUpdates && payload.PlanId != payload.Subscription.PlanId) || oldValue == null)
+        var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(model.MicrosoftId);
+        if (subscription == null)
         {
-            auditLog.NewValue = oldValue?.PlanId;
-            this.subscriptionsLogRepository.Save(auditLog);
-            throw new MarketplaceException("Plan Change rejected due to Config settings or Subscription not in database");
+            logger.LogWarning($"Suscripción {model.MicrosoftId} no encontrada en la BDD. No se puede activar.");
+            return;
         }
 
-        this.subscriptionService.UpdateSubscriptionPlan(payload.SubscriptionId, payload.PlanId);
-        await this.applicationLogService.AddApplicationLog("Plan Successfully Changed.").ConfigureAwait(false);
-        auditLog.NewValue = payload.PlanId;
-        this.subscriptionsLogRepository.Save(auditLog);
-        await Task.CompletedTask;
+        subscription.SubscriptionStatus = "Active";
+        subscriptionRepository.UpdateSubscription(subscription);
+
+        logger.LogInformation($"Suscripción {model.MicrosoftId} actualizada a estado Active.");
     }
 
-    /// <summary>
-    /// Changes the quantity asynchronous.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns>
-    /// Change QuantityAsync.
-    /// </returns>
-    /// <exception cref="NotImplementedException"> Exception.</exception>
-    public async Task ChangeQuantityAsync(WebhookPayload payload)
+    public async Task RenewedAsync(SubscriptionInputModel model)
     {
-        var oldValue = this.subscriptionService.GetSubscriptionsBySubscriptionId(payload.SubscriptionId);
-        SubscriptionAuditLogs auditLog = new SubscriptionAuditLogs()
-        {
-            Attribute = Convert.ToString(SubscriptionLogAttributes.Quantity),
-            SubscriptionId = oldValue?.SubscribeId,
-            OldValue = oldValue?.Quantity.ToString(),
-            CreateBy = null,
-            CreateDate = DateTime.Now,
-        };
+        logger.LogInformation($"[Webhook] Renovación de suscripción {model.MicrosoftId}");
 
-        // we reject if the config value is set to false and the old quantity is not the same as the new quantity.
-        // if the old quantity is the same as new quantity then its a REVERT webhook scenario where we have to accept the change.
-        // we also reject if the subscription is not in the DB
-        var _acceptSubscriptionUpdates = Convert.ToBoolean(this.applicationConfigRepository.GetValueByName(AcceptSubscriptionUpdates));
-        if ((!_acceptSubscriptionUpdates && payload.Quantity != payload.Subscription.Quantity) || oldValue == null)
+        // 1️⃣ Actualizar la suscripción
+        var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(model.MicrosoftId);
+        if (subscription == null)
         {
-            auditLog.NewValue = oldValue?.Quantity.ToString();
-            this.subscriptionsLogRepository.Save(auditLog);
-            throw new MarketplaceException("Quantity Change Request reject due to Config settings or Subscription not in database");
+            logger.LogWarning($"Suscripción {model.MicrosoftId} no encontrada.");
+            return;
         }
 
-        this.subscriptionService.UpdateSubscriptionQuantity(payload.SubscriptionId, payload.Quantity);
-        await this.applicationLogService.AddApplicationLog("Quantity Successfully Changed.").ConfigureAwait(false);
-        auditLog.NewValue = payload.Quantity.ToString();
-        this.subscriptionsLogRepository.Save(auditLog);
-        await Task.CompletedTask;
-    }
+        subscription.EndDate = DateTime.UtcNow.AddMonths(1);
+        subscription.SubscriptionStatus = "Active";
+        subscriptionRepository.UpdateSubscription(subscription);
 
-    /// <summary>
-    /// Reinstated is followed by Suspend.
-    /// This is called when customer fixed their billing issues and partner can choose to reinstate the suspened subscription to subscribed.
-    /// And resume the software access to the customer.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns> Exception.</returns>
-    /// <exception cref="NotImplementedException"> Not Implemented Exception. </exception>
-    public async Task ReinstatedAsync(WebhookPayload payload)
-    {
-        var oldValue = this.subscriptionService.GetSubscriptionsBySubscriptionId(payload.SubscriptionId);
-        SubscriptionAuditLogs auditLog = new SubscriptionAuditLogs()
+        // 2️⃣ Actualizar licencias relacionadas
+        var licenses = licensesRepository.GetByMicrosoftId(model.MicrosoftId);
+        foreach (var license in licenses)
         {
-            Attribute = Convert.ToString(SubscriptionLogAttributes.Status),
-            SubscriptionId = oldValue?.SubscribeId,
-            OldValue = Convert.ToString(oldValue?.SubscriptionStatus),
-            CreateBy = null,
-            CreateDate = DateTime.Now,
-        };
-
-        //gets the user setting from appconfig, if key doesnt exist, add to control the behavior.
-        //_acceptSubscriptionUpdates should be true and subscription should be in db to accept subscription updates
-        var _acceptSubscriptionUpdates = Convert.ToBoolean(this.applicationConfigRepository.GetValueByName(AcceptSubscriptionUpdates));
-        if (_acceptSubscriptionUpdates && oldValue != null)
-        {
-            this.subscriptionService.UpdateStateOfSubscription(payload.SubscriptionId, SubscriptionStatusEnumExtension.Subscribed.ToString(), false);
-            await this.applicationLogService.AddApplicationLog("Reinstated Successfully.").ConfigureAwait(false);
-            auditLog.NewValue = Convert.ToString(SubscriptionStatusEnum.Subscribed);
-                
-        }
-        else
-        {
-            var patchOperation = await fulfillApiService.PatchOperationStatusResultAsync(payload.SubscriptionId, payload.OperationId, Microsoft.Marketplace.SaaS.Models.UpdateOperationStatusEnum.Failure);
-            if (patchOperation != null && patchOperation.Status != 200)
-            {
-                await this.applicationLogService.AddApplicationLog($"Reinstate operation PATCH failed with status statuscode {patchOperation.Status} {patchOperation.ReasonPhrase}.").ConfigureAwait(false);
-                //partner trying to fail update operation from customer but PATCH on operation didnt succeced, hence throwing an error
-                throw new Exception(patchOperation.ReasonPhrase);
-            }
-
-            await this.applicationLogService.AddApplicationLog("Reinstate Change Request Rejected Successfully.").ConfigureAwait(false);
-            auditLog.NewValue = Convert.ToString(oldValue?.SubscriptionStatus);
+            license.Status = 1;
+            license.LicenseExpires = DateTime.UtcNow.AddMonths(1).ToString();
+            licensesRepository.UpdateLicense(license);
         }
 
-        this.subscriptionsLogRepository.Save(auditLog); 
+        // 3️⃣ Crear sublines 
+        subLinesService.CreateFromDataModel(model);
 
-        await Task.CompletedTask;
+        logger.LogInformation($"Suscripción {model.MicrosoftId}, licencias y sublines actualizadas tras renovación.");
     }
 
-    /// <summary>
-    /// Renewed the subscription.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task RenewedAsync()
+
+    public async Task UnsubscribedAsync(SubscriptionInputModel model)
     {
-        await this.applicationLogService.AddApplicationLog("Offer Successfully Renewed.").ConfigureAwait(false);
+        logger.LogInformation($"[Webhook] Cancelación de suscripción {model.MicrosoftId}");
 
-        await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Suspended the asynchronous.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns> Exception.</returns>
-    /// <exception cref="NotImplementedException"> Implemented Exception.</exception>
-    public async Task SuspendedAsync(WebhookPayload payload)
-    {
-        var oldValue = this.subscriptionService.GetSubscriptionsBySubscriptionId(payload.SubscriptionId);
-        this.subscriptionService.UpdateStateOfSubscription(payload.SubscriptionId, SubscriptionStatusEnumExtension.Suspend.ToString(), false);
-        await this.applicationLogService.AddApplicationLog("Offer Successfully Suspended.").ConfigureAwait(false);
-
-        if (oldValue != null)
+        // 1️⃣ Actualizar la suscripción principal
+        var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(model.MicrosoftId);
+        if (subscription == null)
         {
-            SubscriptionAuditLogs auditLog = new SubscriptionAuditLogs()
-            {
-                Attribute = Convert.ToString(SubscriptionLogAttributes.Status),
-                SubscriptionId = oldValue.SubscribeId,
-                NewValue = Convert.ToString(SubscriptionStatusEnum.Suspended),
-                OldValue = Convert.ToString(oldValue.SubscriptionStatus),
-                CreateBy = null,
-                CreateDate = DateTime.Now,
-            };
-            this.subscriptionsLogRepository.Save(auditLog);
+            logger.LogWarning($"Suscripción {model.MicrosoftId} no encontrada en la BDD.");
+            return;
         }
 
-        await Task.CompletedTask;
-    }
+        subscription.SubscriptionStatus = "Canceled";
+        subscriptionRepository.UpdateSubscription(subscription);
 
-    /// <summary>
-    /// Unsubscribed the asynchronous.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task UnsubscribedAsync(WebhookPayload payload)
-    {
-        var oldValue = this.subscriptionService.GetSubscriptionsBySubscriptionId(payload.SubscriptionId);
-        this.subscriptionService.UpdateStateOfSubscription(payload.SubscriptionId, SubscriptionStatusEnumExtension.Unsubscribed.ToString(), false);
-        await this.applicationLogService.AddApplicationLog("Offer Successfully UnSubscribed.").ConfigureAwait(false);
-
-        if (oldValue != null)
+        // 2️⃣ Actualizar licencias relacionadas
+        var licenses = licensesRepository.GetByMicrosoftId(model.MicrosoftId);
+        foreach (var license in licenses)
         {
-            SubscriptionAuditLogs auditLog = new SubscriptionAuditLogs()
-            {
-                Attribute = Convert.ToString(SubscriptionLogAttributes.Status),
-                SubscriptionId = oldValue.SubscribeId,
-                NewValue = Convert.ToString(SubscriptionStatusEnum.Unsubscribed),
-                OldValue = Convert.ToString(oldValue.SubscriptionStatus),
-                CreateBy = null,
-                CreateDate = DateTime.Now,
-            };
-            this.subscriptionsLogRepository.Save(auditLog);
+            license.Status = 2;
+            licensesRepository.UpdateLicense(license);
         }
 
-        this.notificationStatusHandlers.Process(payload.SubscriptionId);
 
-        await Task.CompletedTask;
+        // 3️⃣ Crear sublines 
+        subLinesService.CreateFromDataModel(model);
+
+        logger.LogInformation($"Suscripción {model.MicrosoftId}, licencias y sublines marcadas como canceladas.");
     }
 
-    /// <summary>
-    /// Report unknow action from the webhook the asynchronous.
-    /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task UnknownActionAsync(WebhookPayload payload)
-    {
-        await this.applicationLogService.AddApplicationLog("Offer Received an unknown action: " + payload.Action).ConfigureAwait(false);
 
-        await Task.CompletedTask;
+
+    public async Task ChangeQuantityAsync(SubscriptionInputModel model)
+    {
+        logger.LogInformation($"[Webhook] Cambio de cantidad en licencia de suscripción {model.MicrosoftId}");
+
+        // 1️⃣ Recuperar la licencia asociada a la suscripción
+        var licenses = licensesRepository.GetByMicrosoftId(model.MicrosoftId);
+        if (licenses == null)
+        {
+            logger.LogWarning($"No se encontró licencia para la suscripción {model.MicrosoftId}");
+            return;
+        }
+
+        // 2️⃣ Actualizar la cantidad
+        foreach (var license in licenses)
+        {
+            license.PurchasedLicenses = model.UsersQ;
+            licensesRepository.UpdateLicense(license);
+        }
+
+        logger.LogInformation($"Licencia de suscripción {model.MicrosoftId} actualizada con nueva cantidad: {model.UsersQ}");
+    }
+
+
+    public async Task SuspendedAsync(SubscriptionInputModel model)
+    {
+        logger.LogInformation($"[Webhook] Suspensión de suscripción {model.MicrosoftId}");
+
+        // 1️⃣ Actualizar la suscripción
+        var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(model.MicrosoftId);
+        if (subscription == null)
+        {
+            logger.LogWarning($"Suscripción {model.MicrosoftId} no encontrada en la BDD.");
+            return;
+        }
+
+        subscription.SubscriptionStatus = "Suspended";
+        subscriptionRepository.UpdateSubscription(subscription);
+
+        // 2️⃣ Actualizar licencias asociadas
+        var licenses = licensesRepository.GetByMicrosoftId(model.MicrosoftId);
+        foreach (var license in licenses)
+        {
+            license.Status = 2;
+            licensesRepository.UpdateLicense(license);
+        }
+
+        logger.LogInformation($"Suscripción {model.MicrosoftId} y licencias asociadas marcadas como suspendidas.");
+    }
+
+
+    public async Task UnknownActionAsync(SubscriptionInputModel model)
+    {
+        logger.LogWarning($"[Webhook] Acción desconocida para suscripción {model.MicrosoftId} con estado {model.Status}");
+        // Aquí podrías registrar el evento en una tabla de auditoría
     }
 }
