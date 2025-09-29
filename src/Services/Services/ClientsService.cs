@@ -46,13 +46,18 @@ public class ClientsService : IClientsService
 
         if (existingClient != null)
         {
-            // Update existing client with new subscription details
             existingClient.MicrosoftId = model.MicrosoftId;
-            existingClient.LicenseID = model.LicenseId;
+
+            if (existingClient.LicenseID == 0)
+            {
+                existingClient.LicenseID = GenerateLicenseId();
+            }
+
             existingClient.LicenseType = licenseType;
 
             clientsRepository.UpdateClient(existingClient);
         }
+
         else
         {
             // Create a new client record
@@ -60,12 +65,20 @@ public class ClientsService : IClientsService
             {
                 OWAEmail = model.PurchaserEmail,
                 MicrosoftId = model.MicrosoftId,
-                LicenseID = model.LicenseId,
+                LicenseID = GenerateLicenseId(),
                 LicenseType = licenseType,
-            };
+                LastAccessed = "-",
+                Created = "-"
+        };
 
             clientsRepository.CreateClient(newClient);
         }
+    }
+
+    private static int GenerateLicenseId()
+    {
+        var random = new Random();
+        return random.Next(1, 10001);
     }
 
 
@@ -74,8 +87,10 @@ public class ClientsService : IClientsService
     private int ConvertLicenseType(string microsoftPlanId) =>
         microsoftPlanId switch
         {
-            "Ant Text 365 Standart" => 1,
-            "Ant Text 365 Bussiness" => 2,
+            "atxttst001" => 1,
+            "atxttst002" => 2,
+            "atxttst003" => 3,
+            "atxttst004" => 4,
             _ => throw new InvalidOperationException("Unrecognized plan")
         };
 

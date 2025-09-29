@@ -32,7 +32,7 @@ public class SubLinesService : ISubLinesService
             Amount = model.Amount ?? 0 
         };
 
-        return subLinesRepository.Save(subLine);
+        return subLinesRepository.AddNewLine(subLine);
     }
 
     // Retrieves all SubLine records associated with a given Microsoft ID

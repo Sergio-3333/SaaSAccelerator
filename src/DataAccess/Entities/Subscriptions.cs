@@ -24,6 +24,9 @@ public partial class Subscriptions
 
     public DateTime? EndDate { get; set; } 
 
-    public bool? AutoRenew { get; set; } 
+    public bool? AutoRenew { get; set; }
+
+    public string Name { get; set; }
+
 
 }

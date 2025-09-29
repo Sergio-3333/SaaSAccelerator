@@ -42,7 +42,7 @@ public class LicenseService : ILicenseService
         int? licensesStd;
         int? licensesBiz;
 
-        if (model.AMPPlanId == "Ant Text 365 Standart")
+        if (model.AMPPlanId == "atxttst001" || model.AMPPlanId == "atxttst003")
         {
             licensesStd = 1;
             licensesBiz = 0;
@@ -67,12 +67,21 @@ public class LicenseService : ILicenseService
             Name = model.Name,
             Email = model.PurchaserEmail,
             Phone = model.Phone,
-            Status = model.Status.GetHashCode(),
+            Status = 2,
             PurchasedLicenses = model.UsersQ,
-            Created = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-            LicenseExpires = model.EndDate.ToString(),
+            Created = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
+            LicenseExpires = (model.EndDate ?? DateTime.UtcNow.AddMonths(1)).ToString("yyyyMMddHHmmss"),
             LicensesStd = licensesStd,
-            LicensesBiz = licensesBiz
+            LicensesBiz = licensesBiz,
+            PartnerID = 0,
+            ProductID = 0,
+            Adr1 = "-",
+            Adr2 = "-",
+            GLN = "-",
+            VatNo = "-",
+            CountryId = 0,
+            Zip = "-"
+ 
         };
 
         // Check if a license already exists for this email
@@ -109,21 +118,6 @@ public class LicenseService : ILicenseService
         while (licenseRepository.ExistsLicenseKey(key));
 
         return key;
-    }
-
-
-    public int GenerateUniqueLicenseId()
-    {
-        var random = new Random();
-        int licenseId;
-
-        do
-        {
-            licenseId = random.Next(100000, 999999);
-        }
-        while (licenseRepository.ExistsLicenseId(licenseId));
-
-        return licenseId;
     }
 
 

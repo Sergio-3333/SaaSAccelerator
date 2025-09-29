@@ -35,8 +35,7 @@ public interface IFulfillmentApiService
     Task CancelSubscriptionAsync(Guid subscriptionId);
 
     // Resolves a subscription from a marketplace token.
-    Task<ResolvedSubscriptionResult> ResolveAsync(string token);
-
+    Task<ResolvedSubscription> ResolveAsync(string token);
     // Returns the SaaS application URL used in fulfillment flows.
     string GetSaaSAppURL();
 }

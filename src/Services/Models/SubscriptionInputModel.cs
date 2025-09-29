@@ -86,7 +86,7 @@ public class SubscriptionInputModel
     [JsonPropertyName("country")]
     public string Country { get; set; }
 
-    [JsonPropertyName("currency")]
+    [JsonPropertyName("currencyCode")]
     public string Currency { get; set; }
 
     [JsonPropertyName("amount")]

@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Azure.Identity;
+using Microsoft.Marketplace.SaaS;
 
 
 namespace Marketplace.SaaS.Accelerator.CustomerSite;
@@ -24,41 +26,59 @@ public class Startup
 
     public IConfiguration Configuration { get; }
 
-public void ConfigureServices(IServiceCollection services)
-{
-    // Configuración Fulfillment API
-    var config = new SaaSApiClientConfiguration
+    public void ConfigureServices(IServiceCollection services)
     {
-        ClientId = Configuration["SaaSApiConfiguration:ClientId"],
-        ClientSecret = Configuration["SaaSApiConfiguration:ClientSecret"],
-        TenantId = Configuration["SaaSApiConfiguration:TenantId"],
-        FulFillmentAPIBaseURL = Configuration["SaaSApiConfiguration:FulFillmentAPIBaseURL"],
-        FulFillmentAPIVersion = Configuration["SaaSApiConfiguration:FulFillmentAPIVersion"],
-        Resource = Configuration["SaaSApiConfiguration:Resource"],
-        SaaSAppUrl = Configuration["SaaSApiConfiguration:SaaSAppUrl"]
-    };
+        // Configuración Fulfillment API
+        var config = new SaaSApiClientConfiguration
+        {
+            ClientId = Configuration["SaaSApiConfiguration:ClientId"],
+            ClientSecret = Configuration["SaaSApiConfiguration:ClientSecret"],
+            TenantId = Configuration["SaaSApiConfiguration:TenantId"],
+            Resource = Configuration["SaaSApiConfiguration:Resource"],
+            SaaSAppUrl = Configuration["SaaSApiConfiguration:SaaSAppUrl"]
+        };
 
-    services.AddSingleton(config);
-    services.AddHttpClient<IFulfillmentApiService, FulfillmentApiService>();
+        services.AddSingleton(config);
 
-    // DbContext y repositorios
-    services.AddDbContext<SaasKitContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+        // 👉 Registrar el cliente oficial con credenciales modernas
+        services.AddScoped<IMarketplaceSaaSClient>(sp =>
+        {
+            var credential = new ClientSecretCredential(
+                config.TenantId,
+                config.ClientId,
+                config.ClientSecret
+            );
 
-    services.AddScoped<IClientsRepository, ClientsRepository>();
-    services.AddScoped<ISubscriptionsRepository, SubscriptionsRepository>();
-    services.AddScoped<ILicensesRepository, LicensesRepository>();
-    services.AddScoped<ISubLinesRepository, SubLinesRepository>();
+            // El SDK ya sabe la URL base, no hace falta pasarla
+            return new MarketplaceSaaSClient(credential);
+        });
 
-    // Servicios de negocio (registrar interfaces con implementaciones)
-    services.AddScoped<IClientsService, ClientsService>();
-    services.AddScoped<ISubscriptionService, SubscriptionService>();
-    services.AddScoped<ILicenseService, LicenseService>();
-    services.AddScoped<ISubLinesService, SubLinesService>();
+        // Registrar FulfillmentApiService con HttpClient
+        services.AddHttpClient<IFulfillmentApiService, FulfillmentApiService>();
 
-    // Solo controladores (sin vistas)
-    services.AddControllers();
-}
+        // DbContext y repositorios
+        services.AddDbContext<SaasKitContext>(options =>
+            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<IClientsRepository, ClientsRepository>();
+        services.AddScoped<ISubscriptionsRepository, SubscriptionsRepository>();
+        services.AddScoped<ILicensesRepository, LicensesRepository>();
+        services.AddScoped<ISubLinesRepository, SubLinesRepository>();
+
+        // Servicios de negocio
+        services.AddScoped<IClientsService, ClientsService>();
+        services.AddScoped<ISubscriptionService, SubscriptionService>();
+        services.AddScoped<ILicenseService, LicenseService>();
+        services.AddScoped<ISubLinesService, SubLinesService>();
+        services.AddScoped<SubscriptionService>();
+        services.AddScoped<LicenseService>();
+        services.AddScoped<SubLinesService>();
+        services.AddScoped<ClientsService>();
+
+
+        // Solo controladores (sin vistas)
+        services.AddControllers();
+    }
 
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -79,8 +99,15 @@ public void ConfigureServices(IServiceCollection services)
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapControllers(); // Solo API controllers
+            // Mapea todos los controllers con atributos [Route] o convenciones
+            endpoints.MapControllers();
+
+            // Ruta por defecto: si llaman a "/" va a Home/Index
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
         });
+
     }
 }
 

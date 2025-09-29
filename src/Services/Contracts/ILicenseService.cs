@@ -15,4 +15,6 @@ public interface ILicenseService
 
     // Creates or updates a license using subscription input and links it to an installation.
     int SaveLicenseFromInputModel(SubscriptionInputModel model);
+
+
 }

@@ -57,6 +57,10 @@ public class SubscriptionService : ISubscriptionService
         return subscriptionRepository.GetSubscriptionByMicrosoftId(microsoftId);
     }
 
+
+
+
+
     // Maps SubscriptionInputModel to Subscriptions entity
     private Subscriptions MapToEntity(SubscriptionInputModel model)
     {
@@ -72,11 +76,23 @@ public class SubscriptionService : ISubscriptionService
             AutoRenew = model.AutoRenew,
             Term = model.Term,
             StartDate = model.StartDate,
-            EndDate = model.EndDate
-
+            EndDate = model.EndDate,
+            Name = ConvertLicenseType(model.AMPPlanId)
         };
-
     }
 
+    private static string ConvertLicenseType(string ampPlanId)
+    {
+        if (string.Equals(ampPlanId, "atxttst001", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Ant Text 365 Standart";
+        }
+        else
+        {
+            return "Ant Text 365 Business";
+        }
+    }
+
+
+
 }
-            

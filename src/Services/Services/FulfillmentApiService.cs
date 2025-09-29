@@ -71,20 +71,12 @@ public class FulfillmentApiService : IFulfillmentApiService
     }
 
     // Resolves a subscription from a marketplace token (used during initial onboarding)
-    public async Task<ResolvedSubscriptionResult> ResolveAsync(string token)
+    public async Task<ResolvedSubscription> ResolveAsync(string token)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://marketplaceapi.microsoft.com/api/saas/subscriptions/resolve");
-        request.Headers.Add("x-ms-marketplace-token", token);
-        request.Headers.Add("Accept", "application/json");
-
-        var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadAsStringAsync();
-        var resolved = JsonConvert.DeserializeObject<ResolvedSubscriptionResult>(json);
-
-        return resolved;
+        var result = await marketplaceClient.Fulfillment.ResolveAsync(token);
+        return result.Value;
     }
+
 
     // Returns the configured SaaS application URL
     public string GetSaaSAppURL()
