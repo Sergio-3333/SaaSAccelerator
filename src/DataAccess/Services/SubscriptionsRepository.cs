@@ -3,6 +3,7 @@ using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using System.Linq;
 using System;
+using Microsoft.EntityFrameworkCore;
 
 // Repository for the Subscriptions entity.
 // Handles creation, updates, and retrieval of subscription records.
@@ -40,6 +41,12 @@ public class SubscriptionsRepository : ISubscriptionsRepository
         _context.Entry(existing).CurrentValues.SetValues(subscription);
         _context.SaveChanges();
     }
+
+    public bool ExistsByMicrosoftId(string microsoftId)
+    {
+        return _context.Subscriptions.Any(s => s.MicrosoftId == microsoftId);
+    }
+
 
     // Retrieves a subscription by its MicrosoftId.
     public Subscriptions GetSubscriptionByMicrosoftId(string microsoftId) =>

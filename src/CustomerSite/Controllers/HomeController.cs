@@ -27,6 +27,8 @@ public class HomeController : Controller
     private readonly SubLinesService subLinesService;
     private readonly SubscriptionService subscriptionService;
     private readonly ClientsService clientsService;
+    private readonly SubscriptionsRepository subscriptionsRepository;
+
 
     public HomeController(
          IFulfillmentApiService apiService,
@@ -34,6 +36,7 @@ public class HomeController : Controller
          LicenseService licenseService,
          SubLinesService subLinesService,
          ClientsService clientsService,
+         SubscriptionsRepository subscriptionsRepository,
          ILogger<HomeController> logger)
     {
         this.apiService = apiService;
@@ -41,6 +44,7 @@ public class HomeController : Controller
         this.licenseService = licenseService;
         this.subLinesService = subLinesService;
         this.clientsService = clientsService;
+        this.subscriptionsRepository = subscriptionsRepository;
         this.logger = logger;
     }
 
@@ -121,6 +125,7 @@ public class HomeController : Controller
         model.IsActive = true;
         model.UserId = details.PublisherId.GetHashCode();
         model.Term = details.Term?.TermUnit.ToString();
+        model.AMPlan = details.Name;
 
         // === 2. Billing ===
         var billingToken = await GetTokenAsync(tenantId, clientId, clientSecret, "https://api.partnercenter.microsoft.com");
@@ -142,7 +147,7 @@ public class HomeController : Controller
                     var subId = item.GetProperty("subscriptionId").GetString();
                     if (string.Equals(subId, model.MicrosoftId, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (item.TryGetProperty("currencyCode", out var currency))
+                        if (item.TryGetProperty("billingCurrencyCode", out var currency))
                             model.Currency = currency.GetString();
                         if (item.TryGetProperty("afterTaxTotal", out var amount) && amount.ValueKind == JsonValueKind.Number)
                             model.Amount = amount.GetDecimal();
@@ -197,7 +202,7 @@ public class HomeController : Controller
                     model.Name = displayName.GetString();
                     model.Company = displayName.GetString();
                 }
-                if (org.TryGetProperty("country", out var country))
+                if (org.TryGetProperty("state", out var country))
                     model.Country = country.GetString();
                 if (org.TryGetProperty("city", out var city))
                     model.City = city.GetString();
@@ -221,29 +226,41 @@ public class HomeController : Controller
 
         logger.LogInformation($"Token recibido: {token}");
 
-        // Resolver suscripción con el token de Marketplace (SDK moderno)
+        // 1. Resolver suscripción con el token
         ResolvedSubscription resolved = await apiService.ResolveAsync(token);
-        if (resolved == null || resolved.Id == null || resolved.Id == Guid.Empty)
+        if (resolved?.Id == null || resolved.Id == Guid.Empty)
             return Content("Error: no se pudo resolver la suscripción");
 
         logger.LogInformation($"SubscriptionId resuelto: {resolved.Id}");
-
-        // Obtener datos completos desde Fulfillment API
 
 
 
         if (model == null)
             return Content("Error: no se pudo obtener el modelo de suscripción");
 
-        // Guardar en BDD
-        subscriptionService.CreateSubscription(model);
+        // 3. Activar en Microsoft
+        var subscriptionFromApi = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
+        await apiService.ActivateSubscriptionAsync(subscriptionFromApi);
+
+        // 4. Guardar en BDD solo si no existe ya ese MicrosoftId
+        if (!subscriptionsRepository.ExistsByMicrosoftId(model.MicrosoftId))
+        {
+            subscriptionService.CreateSubscription(model);
+            subLinesService.CreateFromDataModel(model);
+            subscriptionService.UpdateStateOfSubscription(resolved.Id.ToString(), "Active", true);
+
+        }
+
         licenseService.SaveLicenseFromInputModel(model);
-        subLinesService.CreateFromDataModel(model);
         clientsService.CreateOrUpdateClientFromSubscription(model);
 
-        // Redirigir al sitio final
+        // 5. Redirigir al sitio final
         return Redirect("https://www.anttext.com/");
     }
+
+
+
+
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

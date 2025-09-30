@@ -3,6 +3,7 @@ using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 public class SubscriptionService : ISubscriptionService
@@ -56,8 +57,6 @@ public class SubscriptionService : ISubscriptionService
     {
         return subscriptionRepository.GetSubscriptionByMicrosoftId(microsoftId);
     }
-
-
 
 
 

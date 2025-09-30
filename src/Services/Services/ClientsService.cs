@@ -1,6 +1,7 @@
 ﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using System;
 
@@ -8,11 +9,14 @@ public class ClientsService : IClientsService
 {
     private readonly IClientsRepository clientsRepository;
     private readonly ILicenseService licenseService;
+    private readonly ILicensesRepository licensesRepository;
 
-    public ClientsService(IClientsRepository clientsRepository, ILicenseService licenseService)
+
+    public ClientsService(IClientsRepository clientsRepository, ILicenseService licenseService, ILicensesRepository licensesRepository)
     {
         this.clientsRepository = clientsRepository;
         this.licenseService = licenseService;
+        this.licensesRepository = licensesRepository;
     }
 
     // Retrieves a client using the installation ID
@@ -39,47 +43,51 @@ public class ClientsService : IClientsService
         if (string.IsNullOrWhiteSpace(model.PurchaserEmail))
             throw new ArgumentException("Client email cannot be empty.");
 
+        // 1. Buscar el license asociado al email
+        var license = licensesRepository.GetByEmail(model.PurchaserEmail);
+        if (license == null)
+            throw new InvalidOperationException($"No existe un License asociado al email {model.PurchaserEmail}");
+
+        // 2. Buscar cliente por email
         var existingClient = clientsRepository.GetByEmail(model.PurchaserEmail);
 
-        // Determine license type based on AMP plan
         int licenseType = ConvertLicenseType(model.AMPPlanId);
 
         if (existingClient != null)
         {
             existingClient.MicrosoftId = model.MicrosoftId;
 
+            // Si el cliente no tiene LicenseId asignado, lo actualizamos
             if (existingClient.LicenseID == 0)
             {
-                existingClient.LicenseID = GenerateLicenseId();
+                existingClient.LicenseID = license.LicenseID;
+            }
+            else if (existingClient.LicenseID != license.LicenseID)
+            {
+                // Si hay discrepancia, decides si sobrescribir o lanzar error
+                existingClient.LicenseID = license.LicenseID;
             }
 
             existingClient.LicenseType = licenseType;
-
             clientsRepository.UpdateClient(existingClient);
         }
-
         else
         {
-            // Create a new client record
+            // Crear nuevo cliente con el LicenseId existente
             var newClient = new Clients
             {
                 OWAEmail = model.PurchaserEmail,
                 MicrosoftId = model.MicrosoftId,
-                LicenseID = GenerateLicenseId(),
+                LicenseID = license.LicenseID,
                 LicenseType = licenseType,
                 LastAccessed = "-",
                 Created = "-"
-        };
+            };
 
             clientsRepository.CreateClient(newClient);
         }
     }
 
-    private static int GenerateLicenseId()
-    {
-        var random = new Random();
-        return random.Next(1, 10001);
-    }
 
 
 

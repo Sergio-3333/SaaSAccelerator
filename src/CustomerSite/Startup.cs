@@ -74,6 +74,8 @@ public class Startup
         services.AddScoped<LicenseService>();
         services.AddScoped<SubLinesService>();
         services.AddScoped<ClientsService>();
+        services.AddScoped<SubscriptionsRepository>();
+
 
 
         // Solo controladores (sin vistas)

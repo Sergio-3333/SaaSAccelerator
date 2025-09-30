@@ -4,6 +4,7 @@ using System.Linq;
 using Marketplace.SaaS.Accelerator.DataAccess.Context;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 
@@ -39,6 +40,7 @@ public class LicensesRepository : ILicensesRepository
         _context.SaveChanges();
         return license.LicenseID;
     }
+
 
     // Updates an existing license based on LicenseID.
     // Throws an exception if the license does not exist.
