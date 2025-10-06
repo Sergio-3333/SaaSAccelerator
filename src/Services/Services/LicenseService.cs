@@ -26,8 +26,8 @@ public class LicenseService : ILicenseService
 
 
     // Retrieves all licenses associated with a given Microsoft ID
-    public IEnumerable<Licenses> GetByMicrosoftId(string microsoftId) =>
-        licenseRepository.GetByMicrosoftId(microsoftId);
+    public Licenses GetLicenseByMicrosoftId(string microsoftId) =>
+        licenseRepository.GetLicenseByMicrosoftId(microsoftId);
 
 
     // Retrieves a license using the purchaser's email
@@ -44,13 +44,13 @@ public class LicenseService : ILicenseService
 
         if (model.AMPPlanId == "atxttst001" || model.AMPPlanId == "atxttst003")
         {
-            licensesStd = 1;
+            licensesStd = model.UsersQ;
             licensesBiz = 0;
         }
         else
         {
             licensesStd = 0;
-            licensesBiz = 1;
+            licensesBiz = model.UsersQ;
         }
 
         // Generate a new license ID and license key
@@ -70,7 +70,7 @@ public class LicenseService : ILicenseService
             Status = 2,
             PurchasedLicenses = model.UsersQ,
             Created = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
-            LicenseExpires = (model.EndDate ?? DateTime.UtcNow.AddMonths(1)).ToString("yyyyMMddHHmmss"),
+            LicenseExpires = GetLicenseExpires(model.Term),
             LicensesStd = licensesStd,
             LicensesBiz = licensesBiz,
             PartnerID = 0,
@@ -84,21 +84,30 @@ public class LicenseService : ILicenseService
  
         };
 
-        // Check if a license already exists for this email
-        var existing = licenseRepository.GetByEmail(model.PurchaserEmail);
-        if (existing != null)
+            // Create new license and return its ID
+            return licenseRepository.CreateLicense(license);
+    }
+
+    public static string GetLicenseExpires(string term)
+    {
+        string licenseExpires;
+
+        if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
         {
-            // Update existing license, preserving its ID
-            license.LicenseID = existing.LicenseID;
-            licenseRepository.UpdateLicense(license);
-            return existing.LicenseID;
+            licenseExpires = DateTime.UtcNow
+                .AddMonths(1)
+                .ToString("yyyyMMddHHmmss");
         }
         else
         {
-            // Create new license and return its ID
-            return licenseRepository.CreateLicense(license);
+            licenseExpires = DateTime.UtcNow
+                .AddYears(1)
+                .ToString("yyyyMMddHHmmss");
         }
+
+        return licenseExpires;
     }
+
 
     public string GenerateUniqueLicenseKey()
     {

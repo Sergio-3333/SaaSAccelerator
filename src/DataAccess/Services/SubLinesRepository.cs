@@ -51,13 +51,12 @@ public class SubLinesRepository : ISubLinesRepository
 
     // Retrieves all sublines associated with a given MicrosoftId,
     // ordered by ChargeDate descending.
-    public IEnumerable<SubLines> GetByMicrosoftId(string microsoftId)
-    {
-        return _context.SubLines
-            .Where(s => s.MicrosoftId == microsoftId)
-            .OrderByDescending(s => s.ChargeDate)
-            .ToList();
-    }
+    public SubLines GetByMicrosoftId(string microsoftId) =>
+            _context.SubLines
+                .Where(s => s.MicrosoftId == microsoftId)
+                .OrderByDescending(s => s.SubLinesId)
+                .FirstOrDefault();
+
 
     // Inserts a new subline into the database.
     public int AddNewLine(SubLines subLine)

@@ -10,7 +10,7 @@ public class SubscriptionInputModel
 {
     // --- Datos de la suscripción (tabla Subscriptions) ---
 
-    [JsonPropertyName("id")] // o "subscriptionId" según el payload
+    [JsonPropertyName("Id")] // o "subscriptionId" según el payload
     public string MicrosoftId { get; set; }
 
     public int LicenseId { get; set;  }
@@ -46,11 +46,6 @@ public class SubscriptionInputModel
     [JsonPropertyName("autoRenew")]
     public bool? AutoRenew { get; set; }
 
-    [JsonPropertyName("action")]
-    public WebhookAction Action { get; set; }
-
-
-
 
     // --- Datos enriquecidos desde Graph API (para Licenses/Clients) ---
 
@@ -66,8 +61,14 @@ public class SubscriptionInputModel
     [JsonPropertyName("companyName")]
     public string Company { get; set; }
 
-    [JsonPropertyName("city")] // o "officeLocation"
+    [JsonPropertyName("city")] 
     public string City { get; set; }
+
+    [JsonPropertyName("street")]
+    public string Adr1 { get; set; }
+
+    [JsonPropertyName("postalCode")]
+    public string Zip { get; set; }
 
 
 
@@ -76,11 +77,11 @@ public class SubscriptionInputModel
     [JsonPropertyName("chargeDate")]
     public DateTime? ChargeDate { get; set; }
 
-    [JsonPropertyName("planName")] // o "amPlan"
+    [JsonPropertyName("planName")] 
     public string AMPlan { get; set; }
 
 
-    [JsonPropertyName("Quantity")] // o "usersQ"
+    [JsonPropertyName("Quantity")] 
     public int UsersQ { get; set; }
 
     [JsonPropertyName("country")]

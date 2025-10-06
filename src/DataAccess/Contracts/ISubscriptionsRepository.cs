@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
@@ -6,8 +7,7 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 public interface ISubscriptionsRepository
 {
     string AddSubscription(Subscriptions subscription);
-    void UpdateSubscription(Subscriptions subscription);
+    void UpdateSubscription(string microsoftId, Action<Subscriptions> updateAction);
     Subscriptions GetSubscriptionByMicrosoftId(string microsoftId);
-    void UpdateSubscriptionStatus(string microsoftId, string subscriptionStatus, bool isActive);
 }
 

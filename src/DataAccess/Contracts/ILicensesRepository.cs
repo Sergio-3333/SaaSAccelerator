@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
@@ -13,7 +15,8 @@ public interface ILicensesRepository
     /// <summary>
     /// Actualiza una licencia existente.
     /// </summary>
-    void UpdateLicense(Licenses license);
+
+    void UpdateLicense(string microsoftId, Action<Licenses> updateAction);
 
     /// <summary>
     /// Obtiene una licencia por su identificador.
@@ -28,7 +31,7 @@ public interface ILicensesRepository
     /// <summary>
     /// Obtiene todas las licencias asociadas a un MicrosoftId.
     /// </summary>
-    IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
+    Licenses GetLicenseByMicrosoftId(string microsoftId);
 
     /// <summary>
     /// Obtiene una licencia por email.

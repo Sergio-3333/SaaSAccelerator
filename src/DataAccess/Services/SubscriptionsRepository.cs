@@ -30,17 +30,20 @@ public class SubscriptionsRepository : ISubscriptionsRepository
 
     // Updates an existing subscription based on MicrosoftId.
     // Throws an exception if the subscription does not exist.
-    public void UpdateSubscription(Subscriptions subscription)
+    public void UpdateSubscription(string microsoftId, Action<Subscriptions> updateAction)
     {
         var existing = _context.Subscriptions
-            .FirstOrDefault(s => s.MicrosoftId == subscription.MicrosoftId);
+            .FirstOrDefault(s => s.MicrosoftId == microsoftId);
 
         if (existing == null)
             throw new InvalidOperationException("Subscription does not exist.");
 
-        _context.Entry(existing).CurrentValues.SetValues(subscription);
+        // Aquí aplicas los cambios que quieras
+        updateAction(existing);
+
         _context.SaveChanges();
     }
+
 
     public bool ExistsByMicrosoftId(string microsoftId)
     {
@@ -52,16 +55,4 @@ public class SubscriptionsRepository : ISubscriptionsRepository
     public Subscriptions GetSubscriptionByMicrosoftId(string microsoftId) =>
         _context.Subscriptions.FirstOrDefault(s => s.MicrosoftId == microsoftId);
 
-    // Updates the status and active flag of a subscription by MicrosoftId.
-    // If the subscription exists, applies the changes and saves.
-    public void UpdateSubscriptionStatus(string microsoftId, string status, bool isActive)
-    {
-        var existing = _context.Subscriptions.FirstOrDefault(s => s.MicrosoftId == microsoftId);
-        if (existing != null)
-        {
-            existing.SubscriptionStatus = status;
-            existing.IsActive = isActive;
-            _context.SaveChanges();
-        }
-    }
 }

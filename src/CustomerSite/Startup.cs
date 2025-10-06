@@ -5,6 +5,8 @@ using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
+using Marketplace.SaaS.Accelerator.Services.WebHook;
+using Marketplace.SaaS.Accelerator.Services.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Azure.Identity;
 using Microsoft.Marketplace.SaaS;
-
-
 namespace Marketplace.SaaS.Accelerator.CustomerSite;
 
 public class Startup
@@ -75,7 +75,9 @@ public class Startup
         services.AddScoped<SubLinesService>();
         services.AddScoped<ClientsService>();
         services.AddScoped<SubscriptionsRepository>();
-
+        services.AddScoped<IWebhookProcessor, WebhookProcessor>();
+        services.AddScoped<IWebhookHandler, WebhookHandler>();
+        services.AddScoped<ValidateJwtToken>();
 
 
         // Solo controladores (sin vistas)

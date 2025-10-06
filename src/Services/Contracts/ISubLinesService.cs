@@ -8,6 +8,7 @@ public interface ISubLinesService
     // Creates a new billing subline from a complete subscription input model.
     int CreateFromDataModel(SubscriptionInputModel model);
 
+
     // Retrieves billing history (sublines) for a given MicrosoftId.
-    IEnumerable<SubLines> GetHistoryByMicrosoftId(string microsoftId);
+    SubLines GetHistoryByMicrosoftId(string microsoftId);
 }

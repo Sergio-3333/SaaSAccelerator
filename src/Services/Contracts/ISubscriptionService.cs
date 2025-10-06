@@ -13,9 +13,6 @@ public interface ISubscriptionService
     // Updates an existing subscription with new data from Microsoft.
     void UpdateSubscription(SubscriptionInputModel model);
 
-    // Updates only the status and active flag of a subscription.
-    void UpdateStateOfSubscription(string microsoftId, string status, bool isActive);
-
     // Retrieves a subscription by its MicrosoftId.
     Subscriptions GetByMicrosoftId(string microsoftId);
 }

@@ -113,6 +113,9 @@ public class HomeController : Controller
         if (details == null)
             return null;
 
+        var fulfillmentJson = JsonSerializer.Serialize(details, new JsonSerializerOptions { WriteIndented = true });
+        logger.LogInformation($"[Fulfillment API] JSON recibido:\n{fulfillmentJson}");
+
         model.MicrosoftId = subscriptionId.ToString();
         model.PurchaserTenantId = details.Purchaser?.TenantId?.ToString();
         model.AMPPlanId = details.PlanId;
@@ -137,6 +140,7 @@ public class HomeController : Controller
 
             var billingRes = await http.GetAsync(billingUrl);
             var billingJson = await billingRes.Content.ReadAsStringAsync();
+            logger.LogInformation($"[Billing API] JSON recibido:\n{billingJson}");
 
             if (billingRes.IsSuccessStatusCode)
             {
@@ -179,6 +183,7 @@ public class HomeController : Controller
             var graphUrl = $"https://graph.microsoft.com/v1.0/organization/{model.PurchaserTenantId}";
             var graphRes = await http.GetAsync(graphUrl);
             var graphJson = await graphRes.Content.ReadAsStringAsync();
+            logger.LogInformation($"[Graph API] JSON recibido:\n{graphJson}");
 
             if (graphRes.IsSuccessStatusCode)
             {
@@ -208,6 +213,10 @@ public class HomeController : Controller
                     model.City = city.GetString();
                 if (org.TryGetProperty("businessPhones", out var phones) && phones.ValueKind == JsonValueKind.Array && phones.GetArrayLength() > 0)
                     model.Phone = phones[0].GetString();
+                if (org.TryGetProperty("street", out var street))
+                    model.Adr1 = street.GetString();
+                if (org.TryGetProperty("postalCode", out var ZIP))
+                    model.Zip = ZIP.GetString();
             }
             else
             {
@@ -235,9 +244,6 @@ public class HomeController : Controller
 
 
 
-        if (model == null)
-            return Content("Error: no se pudo obtener el modelo de suscripción");
-
         // 3. Activar en Microsoft
         var subscriptionFromApi = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
         await apiService.ActivateSubscriptionAsync(subscriptionFromApi);
@@ -247,7 +253,11 @@ public class HomeController : Controller
         {
             subscriptionService.CreateSubscription(model);
             subLinesService.CreateFromDataModel(model);
-            subscriptionService.UpdateStateOfSubscription(resolved.Id.ToString(), "Active", true);
+            subscriptionsRepository.UpdateSubscription(resolved.Id.ToString(), s =>
+            {
+                s.SubscriptionStatus = "Active";
+                s.IsActive = true;
+            });
 
         }
 

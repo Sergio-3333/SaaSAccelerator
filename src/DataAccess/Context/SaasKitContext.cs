@@ -51,13 +51,6 @@ public partial class SaasKitContext : DbContext
         }
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=Test");
-        }
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +89,8 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.PurchasedLicenses).IsRequired();
             entity.Property(e => e.LicensesStd).IsRequired(false);
             entity.Property(e => e.LicensesBiz).IsRequired(false);
+            entity.Property(e => e.Adr1).HasMaxLength(100).IsUnicode(false);
+            entity.Property(e => e.Zip).HasMaxLength(100).IsUnicode(false);
 
             entity.HasMany(e => e.Clients).WithOne(c => c.License).HasForeignKey(c => c.LicenseID).OnDelete(DeleteBehavior.Cascade);
         });
@@ -104,12 +99,8 @@ public partial class SaasKitContext : DbContext
         modelBuilder.Entity<Clients>(entity => {
             entity.ToTable("Clients");
             entity.HasKey(e => e.InstallationID);
-
-            entity.Property(e => e.MicrosoftId).HasMaxLength(36).IsUnicode(false);
             entity.Property(e => e.OWAEmail).HasMaxLength(100).IsUnicode(false);
-
             entity.Property(e => e.LicenseType).IsRequired(false);
-
             entity.HasOne(c => c.License)
                   .WithMany(l => l.Clients)
                   .HasForeignKey(c => c.LicenseID)

@@ -4,7 +4,9 @@ using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Marketplace.SaaS.Models;
 using System;
+using System.ComponentModel;
 
 public class SubscriptionService : ISubscriptionService
 {
@@ -38,19 +40,15 @@ public class SubscriptionService : ISubscriptionService
         if (existing == null)
             throw new InvalidOperationException("Subscription does not exist.");
 
-        // Update only relevant fields
-        existing.SubscriptionStatus = model.Status;
-        existing.IsActive = model.IsActive;
-        existing.AMPPlanId = model.AMPPlanId;
 
-        subscriptionRepository.UpdateSubscription(existing);
+        subscriptionRepository.UpdateSubscription(existing.MicrosoftId, s =>
+        {
+            s.SubscriptionStatus = model.Status;
+            s.IsActive = model.IsActive;
+            s.AMPPlanId = model.AMPPlanId;
+        });
     }
 
-    // Updates subscription status and active flag directly
-    public void UpdateStateOfSubscription(string microsoftId, string status, bool isActive)
-    {
-        subscriptionRepository.UpdateSubscriptionStatus(microsoftId, status, isActive);
-    }
 
     // Retrieves a subscription by its Microsoft ID
     public Subscriptions GetByMicrosoftId(string microsoftId)
@@ -75,10 +73,25 @@ public class SubscriptionService : ISubscriptionService
             AutoRenew = model.AutoRenew,
             Term = model.Term,
             StartDate = model.StartDate,
-            EndDate = model.EndDate,
+            EndDate = CalculateLicenseEndDate(model.Term),
             Name = ConvertLicenseType(model.AMPPlanId)
         };
     }
+
+    public static DateTime CalculateLicenseEndDate(string term)
+    {
+        if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
+        {
+            // Si el término es P1M → +1 mes
+            return DateTime.UtcNow.AddMonths(1);
+        }
+        else
+        {
+            // En cualquier otro caso → +1 año
+            return DateTime.UtcNow.AddYears(1);
+        }
+    }
+
 
     private static string ConvertLicenseType(string ampPlanId)
     {

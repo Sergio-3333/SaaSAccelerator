@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Marketplace.SaaS.Accelerator.DataAccess.Context;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 
@@ -15,11 +17,15 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 public class LicensesRepository : ILicensesRepository
 {
     private readonly SaasKitContext _context;
+    private readonly ILogger<LicensesRepository> logger;
+
 
     // Constructor that injects the database context.
-    public LicensesRepository(SaasKitContext context)
+    public LicensesRepository(SaasKitContext context, ILogger<LicensesRepository> logger)
     {
         _context = context;
+        this.logger = logger;
+
     }
 
     // Returns the next available LicenseID by incrementing the highest existing one.
@@ -44,17 +50,29 @@ public class LicensesRepository : ILicensesRepository
 
     // Updates an existing license based on LicenseID.
     // Throws an exception if the license does not exist.
-    public void UpdateLicense(Licenses license)
+    public void UpdateLicense(string microsoftId, Action<Licenses> updateAction)
     {
-        var existing = _context.Licenses
-            .FirstOrDefault(l => l.LicenseID == license.LicenseID);
+        if (string.IsNullOrWhiteSpace(microsoftId))
+        {
+            logger.LogError("[Repo] El MicrosoftId recibido es NULL o vacío. No se puede actualizar.");
+            return;
+        }
 
-        if (existing == null)
-            throw new InvalidOperationException("License does not exist.");
+        var entity = _context.Licenses
+            .FirstOrDefault(x => x.MicrosoftId == microsoftId);
 
-        _context.Entry(existing).CurrentValues.SetValues(license);
+        if (entity == null)
+        {
+            logger.LogWarning($"[Repo] No se encontró License con MicrosoftId={microsoftId} para actualizar.");
+            return;
+        }
+
+        updateAction(entity);
         _context.SaveChanges();
     }
+
+
+
 
     // Retrieves a license by its LicenseID.
     public Licenses GetById(int licenseId) =>
@@ -65,8 +83,8 @@ public class LicensesRepository : ILicensesRepository
         _context.Licenses.FirstOrDefault(l => l.LicenseKey == licenseKey);
 
     // Retrieves all licenses associated with a given MicrosoftId.
-    public IEnumerable<Licenses> GetByMicrosoftId(string microsoftId) =>
-        _context.Licenses.Where(l => l.MicrosoftId == microsoftId).ToList();
+    public Licenses GetLicenseByMicrosoftId(string microsoftId) =>
+        _context.Licenses.FirstOrDefault(l => l.MicrosoftId == microsoftId);
 
     // Retrieves a license by the purchaser's email.
     public Licenses GetByEmail(string email) =>

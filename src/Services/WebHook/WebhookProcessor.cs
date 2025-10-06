@@ -1,6 +1,7 @@
 ﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
+using Marketplace.SaaS.Accelerator.Services.Models;
 using Marketplace.SaaS.Accelerator.Services.WebHook;
 using Microsoft.Extensions.Logging;
 using System;
@@ -25,9 +26,9 @@ public class WebhookProcessor : IWebhookProcessor
     /// <summary>
     /// Procesa las notificaciones entrantes del webhook y las envía al handler correspondiente.
     /// </summary>
-    public async Task ProcessWebhookNotificationAsync(SubscriptionInputModel model, SaaSApiClientConfiguration config)
+    public async Task ProcessWebhookNotificationAsync(AzureWebHookPayLoad payload, SaaSApiClientConfiguration config)
     {
-        if (model == null)
+        if (payload == null)
         {
             logger.LogWarning("Webhook model is null. Ignoring request.");
             return;
@@ -35,43 +36,42 @@ public class WebhookProcessor : IWebhookProcessor
 
         logger.LogInformation(
             "Processing webhook: Action={Action}, MicrosoftId={MicrosoftId}, Plan={AMPlan}",
-            model.Action, model.MicrosoftId, model.AMPlan);
+            payload.Action, payload.SubscriptionId, payload.PlanId);
 
         try
         {
-            switch (model.Action)
+            switch (payload.Action)
             {
-                case WebhookAction.Unsubscribe:
-                    await webhookHandler.UnsubscribedAsync(model);
+                case "Subscribe":
+                    await webhookHandler.SubscribedAsync(payload);
                     break;
-
-                case WebhookAction.ChangeQuantity:
-                    await webhookHandler.ChangeQuantityAsync(model);
+                case "Unsubscribe":
+                    await webhookHandler.UnsubscribedAsync(payload);
                     break;
-
-                case WebhookAction.Suspend:
-                    await webhookHandler.SuspendedAsync(model);
+                case "ChangeQuantity":
+                    await webhookHandler.ChangeQuantityAsync(payload);
                     break;
-
-                case WebhookAction.Renew:
-                    await webhookHandler.RenewedAsync(model);
+                case "Suspend":
+                    await webhookHandler.SuspendedAsync(payload);
                     break;
-
-                case WebhookAction.Transfer:
-                    await webhookHandler.UnknownActionAsync(model); // Transfer no manejado explícitamente
+                case "Reinstate":
+                    await webhookHandler.ReinstatedAsync(payload);
                     break;
-
+                case "Renew":
+                    await webhookHandler.RenewedAsync(payload);
+                    break;
                 default:
-                    logger.LogWarning("Unknown webhook action: {Action}", model.Action);
-                    await webhookHandler.UnknownActionAsync(model);
+                    logger.LogWarning("Unknown webhook action: {Action}", payload.Action);
+                    await webhookHandler.UnknownActionAsync(payload);
                     break;
             }
+
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
                 "Error processing webhook for MicrosoftId={MicrosoftId}",
-                model.MicrosoftId);
+                payload.SubscriptionId);
             throw;
         }
     }

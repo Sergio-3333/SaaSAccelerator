@@ -11,7 +11,7 @@ public interface ILicenseService
     Licenses GetByLicenseKey(string licenseKey);
 
     // Returns all licenses associated with a Microsoft tenant ID.
-    IEnumerable<Licenses> GetByMicrosoftId(string microsoftId);
+    Licenses GetLicenseByMicrosoftId(string microsoftId);
 
     // Creates or updates a license using subscription input and links it to an installation.
     int SaveLicenseFromInputModel(SubscriptionInputModel model);

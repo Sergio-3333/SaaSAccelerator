@@ -3,6 +3,7 @@
 
 using System.Threading.Tasks;
 using Marketplace.SaaS.Accelerator.DataAccess;
+using Marketplace.SaaS.Accelerator.Services.Models;
 
 namespace Marketplace.SaaS.Accelerator.Services.WebHook;
 
@@ -13,39 +14,54 @@ public interface IWebhookHandler
 {
 
     /// <summary>
-    /// Changes the quantity asynchronous.
+    /// Handles subscription creation (Subscribe).
     /// </summary>
-    /// <param name="payload">The payload.</param>
-    /// <returns>Change QuantityAsync</returns>
-    Task ChangeQuantityAsync(SubscriptionInputModel model);
+    /// <param name="payload">The webhook payload.</param>
+    /// <returns>Subscribed Async</returns>
+    Task SubscribedAsync(AzureWebHookPayLoad payload);
 
 
     /// <summary>
-    /// Renewed subscription state
+    /// Changes the quantity asynchronous.
+    /// </summary>
+    /// <param name="payload">The payload.</param>
+    /// <returns>Change Quantity Async</returns>
+    Task ChangeQuantityAsync(AzureWebHookPayLoad payload);
+
+    /// <summary>
+    /// Renewed subscription state.
     /// </summary>
     /// <param name="payload">The payload.</param>
     /// <returns>Renewed Async</returns>
-    Task RenewedAsync(SubscriptionInputModel model);
+    Task RenewedAsync(AzureWebHookPayLoad payload);
 
     /// <summary>
     /// Suspended the asynchronous.
     /// </summary>
     /// <param name="payload">The payload.</param>
     /// <returns>Suspended Async</returns>
-    Task SuspendedAsync(SubscriptionInputModel model);
+    Task SuspendedAsync(AzureWebHookPayLoad payload);
+
+    /// <summary>
+    /// Reinstated subscription state (after suspension).
+    /// </summary>
+    /// <param name="payload">The payload.</param>
+    /// <returns>Reinstated Async</returns>
+    Task ReinstatedAsync(AzureWebHookPayLoad payload);
 
     /// <summary>
     /// Unsubscribed the asynchronous.
     /// </summary>
     /// <param name="payload">The payload.</param>
     /// <returns>Unsubscribed Async</returns>
-    Task UnsubscribedAsync(SubscriptionInputModel model);
+    Task UnsubscribedAsync(AzureWebHookPayLoad payload);
 
     /// <summary>
-    /// Unknowstate the asynchronous.
+    /// Unknown action fallback.
     /// </summary>
     /// <param name="payload">The payload.</param>
-    /// <returns>Unsubscribed Async</returns>
-    Task UnknownActionAsync(SubscriptionInputModel model);
+    /// <returns>Unknown Action Async</returns>
+    Task UnknownActionAsync(AzureWebHookPayLoad payload);
+
 
 }

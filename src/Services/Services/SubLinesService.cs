@@ -35,8 +35,10 @@ public class SubLinesService : ISubLinesService
         return subLinesRepository.AddNewLine(subLine);
     }
 
+
+
     // Retrieves all SubLine records associated with a given Microsoft ID
-    public IEnumerable<SubLines> GetHistoryByMicrosoftId(string microsoftId)
+    public SubLines GetHistoryByMicrosoftId(string microsoftId)
     {
         return subLinesRepository.GetByMicrosoftId(microsoftId);
     }
