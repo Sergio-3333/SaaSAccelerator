@@ -10,7 +10,7 @@ public partial class Licenses
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LicenseID { get; set; } 
 
-    public string MicrosoftId { get; set; } 
+    public string MicrosoftID { get; set; } 
 
     public string LicenseKey { get; set; } 
 
@@ -23,7 +23,9 @@ public partial class Licenses
 
     public string Email { get; set; } 
 
-    public string Phone { get; set; } 
+    public string Phone { get; set; }
+
+    public string Mobile { get; set; }
 
     public int Status { get; set; } 
 
@@ -45,13 +47,18 @@ public partial class Licenses
 
     public string Adr2 { get; set; }
 
-    public int CountryId { get; set; }
+    public string CountryMS { get; set; }
+
+    public int? CountryId { get; set; }
 
     public string VatNo { get; set; }
 
     public string GLN { get; set; }
 
     public string Zip { get; set; }
+
+    public string Comment { get; set; }
+
 
 
 

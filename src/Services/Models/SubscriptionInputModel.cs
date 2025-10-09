@@ -15,6 +15,9 @@ public class SubscriptionInputModel
 
     public int LicenseId { get; set;  }
 
+    public int SubID { get; set; }
+
+
     [JsonPropertyName("saasSubscriptionStatus")]
     public string Status { get; set; }
 
@@ -26,7 +29,7 @@ public class SubscriptionInputModel
     public bool IsActive { get; set; }
 
     [JsonPropertyName("userId")]
-    public int? UserId { get; set; }
+    public string UserId { get; set; }
 
     [JsonPropertyName("emailId")] // o "purchaserEmail"
     public string PurchaserEmail { get; set; }
@@ -55,8 +58,11 @@ public class SubscriptionInputModel
     [JsonPropertyName("mail")] // o "userPrincipalName"
     public string Email { get; set; }
 
-    [JsonPropertyName("mobilePhone")] // o "businessPhones[0]"
+    [JsonPropertyName("mobilePhone")] 
     public string Phone { get; set; }
+
+    [JsonPropertyName("businessPhone")]
+    public string Mobile { get; set; }
 
     [JsonPropertyName("companyName")]
     public string Company { get; set; }

@@ -15,6 +15,7 @@ using Marketplace.SaaS.Accelerator.DataAccess;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Marketplace.SaaS.Models;
+using static System.Net.WebRequestMethods;
 
 namespace Marketplace.SaaS.Accelerator.CustomerSite.Controllers;
 
@@ -126,54 +127,13 @@ public class HomeController : Controller
         model.PurchaserEmail = details.Purchaser?.EmailId;
         model.AutoRenew = details.AutoRenew;
         model.IsActive = true;
-        model.UserId = details.PublisherId.GetHashCode();
+        model.UserId = details.PublisherId;
         model.Term = details.Term?.TermUnit.ToString();
         model.AMPlan = details.Name;
 
-        // === 2. Billing ===
-        var billingToken = await GetTokenAsync(tenantId, clientId, clientSecret, "https://api.partnercenter.microsoft.com");
-        var billingUrl = "https://api.partnercenter.microsoft.com/v1/invoices/unbilled/lineitems?provider=Marketplace&period=current";
+        
 
-        using (var http = new HttpClient())
-        {
-            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", billingToken);
-
-            var billingRes = await http.GetAsync(billingUrl);
-            var billingJson = await billingRes.Content.ReadAsStringAsync();
-            logger.LogInformation($"[Billing API] JSON recibido:\n{billingJson}");
-
-            if (billingRes.IsSuccessStatusCode)
-            {
-                using var doc = JsonDocument.Parse(billingJson);
-
-                foreach (var item in doc.RootElement.EnumerateArray())
-                {
-                    var subId = item.GetProperty("subscriptionId").GetString();
-                    if (string.Equals(subId, model.MicrosoftId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (item.TryGetProperty("billingCurrencyCode", out var currency))
-                            model.Currency = currency.GetString();
-                        if (item.TryGetProperty("afterTaxTotal", out var amount) && amount.ValueKind == JsonValueKind.Number)
-                            model.Amount = amount.GetDecimal();
-                        if (item.TryGetProperty("chargeStartDate", out var chargeDate))
-                        {
-                            if (chargeDate.ValueKind == JsonValueKind.String &&
-                                DateTime.TryParse(chargeDate.GetString(), out var parsed))
-                            {
-                                model.ChargeDate = parsed;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                logger.LogWarning($"Error al llamar a Partner Center Billing API: {billingRes.StatusCode}\n{billingJson}");
-            }
-        }
-
-        // === 3. Graph ===
+        // === 2. Graph ===
         var graphToken = await GetTokenAsync(tenantId, clientId, clientSecret, "https://graph.microsoft.com");
 
         using (var http = new HttpClient())
@@ -204,15 +164,13 @@ public class HomeController : Controller
 
                 if (org.TryGetProperty("displayName", out var displayName))
                 {
-                    model.Name = displayName.GetString();
                     model.Company = displayName.GetString();
                 }
+
                 if (org.TryGetProperty("state", out var country))
                     model.Country = country.GetString();
                 if (org.TryGetProperty("city", out var city))
                     model.City = city.GetString();
-                if (org.TryGetProperty("businessPhones", out var phones) && phones.ValueKind == JsonValueKind.Array && phones.GetArrayLength() > 0)
-                    model.Phone = phones[0].GetString();
                 if (org.TryGetProperty("street", out var street))
                     model.Adr1 = street.GetString();
                 if (org.TryGetProperty("postalCode", out var ZIP))
@@ -223,10 +181,47 @@ public class HomeController : Controller
                 logger.LogWarning($"Error al llamar a Graph API: {graphRes.StatusCode}\n{graphJson}");
             }
 
+
+            // === 3. Graph DisplayName ===
+            var userUrl = $"https://graph.microsoft.com/v1.0/users/{details.Purchaser.ObjectId}";
+  
+
+            var userRes = await http.GetAsync(userUrl);
+            var userJson = await userRes.Content.ReadAsStringAsync();
+            logger.LogInformation($"[Graph API /users] JSON recibido:\n{userJson}");
+
+            if (userRes.IsSuccessStatusCode)
+            {
+                using var userDoc = JsonDocument.Parse(userJson);
+                var userRoot = userDoc.RootElement;
+
+                if (userRoot.TryGetProperty("displayName", out var displayName))
+                {
+                    model.Name = displayName.GetString(); 
+                }
+
+                if (userRoot.TryGetProperty("mobilePhone", out var mobile))
+                {
+                    model.Mobile = mobile.GetString(); 
+                }
+
+                if (userRoot.TryGetProperty("businessPhones", out var phones) && phones.ValueKind == JsonValueKind.Array && phones.GetArrayLength() > 0)
+                    model.Phone = phones[0].GetString();
+            }
+            else
+            {
+                logger.LogWarning($"Error al llamar a Graph API /users: {userRes.StatusCode}\n{userJson}");
+            }
+
+
         }
+
+
 
         return model;
     }
+
+
 
     public async Task<IActionResult> Index(string token)
     {
@@ -242,7 +237,11 @@ public class HomeController : Controller
 
         logger.LogInformation($"SubscriptionId resuelto: {resolved.Id}");
 
+        // 2. Obtener datos completos desde Fulfillment API
 
+
+        if (model == null)
+            return Content("Error: no se pudo obtener el modelo de suscripción");
 
         // 3. Activar en Microsoft
         var subscriptionFromApi = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
@@ -253,21 +252,20 @@ public class HomeController : Controller
         {
             subscriptionService.CreateSubscription(model);
             subLinesService.CreateFromDataModel(model);
+            licenseService.SaveLicenseFromInputModel(model);
             subscriptionsRepository.UpdateSubscription(resolved.Id.ToString(), s =>
             {
-                s.SubscriptionStatus = "Active";
-                s.IsActive = true;
+                s.SubStatus = "Active";
+                s.Active = true;
             });
 
         }
 
-        licenseService.SaveLicenseFromInputModel(model);
         clientsService.CreateOrUpdateClientFromSubscription(model);
 
         // 5. Redirigir al sitio final
         return Redirect("https://www.anttext.com/");
     }
-
 
 
 

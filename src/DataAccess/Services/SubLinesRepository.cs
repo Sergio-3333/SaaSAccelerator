@@ -20,41 +20,13 @@ public class SubLinesRepository : ISubLinesRepository
         _context = context;
     }
 
-    // Retrieves all sublines from the database.
-    public IEnumerable<SubLines> Get()
-    {
-        return _context.SubLines.ToList();
-    }
-
-    // Retrieves a single subline by its ID.
-    public SubLines Get(int id)
-    {
-        return _context.SubLines.FirstOrDefault(s => s.SubLinesId == id);
-    }
-
-    // Inserts a new subline into the database.
-    // Equivalent to AddNewLine — always performs an insert.
-    public int Save(SubLines entity)
-    {
-        _context.SubLines.Add(entity);
-        _context.SaveChanges();
-        return entity.SubLinesId;
-    }
-
-    // Removes a subline from the database.
-    // Not used in current logic, but included for contract completeness.
-    public void Remove(SubLines entity)
-    {
-        _context.SubLines.Remove(entity);
-        _context.SaveChanges();
-    }
 
     // Retrieves all sublines associated with a given MicrosoftId,
     // ordered by ChargeDate descending.
     public SubLines GetByMicrosoftId(string microsoftId) =>
             _context.SubLines
-                .Where(s => s.MicrosoftId == microsoftId)
-                .OrderByDescending(s => s.SubLinesId)
+                .Where(s => s.MicrosoftID == microsoftId)
+                .OrderByDescending(s => s.SubLinesID)
                 .FirstOrDefault();
 
 
@@ -63,6 +35,6 @@ public class SubLinesRepository : ISubLinesRepository
     {
         _context.SubLines.Add(subLine);
         _context.SaveChanges();
-        return subLine.SubLinesId;
+        return subLine.SubLinesID;
     }
 }

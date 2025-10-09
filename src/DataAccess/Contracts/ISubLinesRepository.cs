@@ -3,7 +3,7 @@ using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 
-public interface ISubLinesRepository : IBaseRepository<SubLines>
+public interface ISubLinesRepository 
 {
     /// <summary>
     /// Obtiene todas las sublíneas asociadas a un MicrosoftId.

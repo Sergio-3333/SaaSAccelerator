@@ -23,10 +23,6 @@ public interface ILicensesRepository
     /// </summary>
     Licenses GetById(int licenseId);
 
-    /// <summary>
-    /// Obtiene una licencia por su clave de licencia.
-    /// </summary>
-    Licenses GetByLicenseKey(string licenseKey);
 
     /// <summary>
     /// Obtiene todas las licencias asociadas a un MicrosoftId.

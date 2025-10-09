@@ -20,11 +20,6 @@ public class LicenseService : ILicenseService
         licenseRepository.GetById(model.LicenseId);
 
 
-    // Retrieves a license using its unique license key
-    public Licenses GetByLicenseKey(string licenseKey) =>
-        licenseRepository.GetByLicenseKey(licenseKey);
-
-
     // Retrieves all licenses associated with a given Microsoft ID
     public Licenses GetLicenseByMicrosoftId(string microsoftId) =>
         licenseRepository.GetLicenseByMicrosoftId(microsoftId);
@@ -41,16 +36,20 @@ public class LicenseService : ILicenseService
         // Determine license type based on AMP plan
         int? licensesStd;
         int? licensesBiz;
+        string comment;
 
         if (model.AMPPlanId == "atxttst001" || model.AMPPlanId == "atxttst003")
         {
             licensesStd = model.UsersQ;
             licensesBiz = 0;
+            comment = "Ant Text MS Standard";
         }
         else
         {
             licensesStd = 0;
             licensesBiz = model.UsersQ;
+            comment = "Ant Text MS Bussines";
+
         }
 
         // Generate a new license ID and license key
@@ -60,27 +59,31 @@ public class LicenseService : ILicenseService
         var license = new Licenses
         {
             LicenseID = model.LicenseId,
-            MicrosoftId = model.MicrosoftId,
+            MicrosoftID = model.MicrosoftId,
             LicenseKey = newLicenseKey,
             Company = model.Company,
             City = model.City,
             Name = model.Name,
             Email = model.PurchaserEmail,
             Phone = model.Phone,
+            Mobile= model.Mobile,
             Status = 2,
             PurchasedLicenses = model.UsersQ,
-            Created = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
+            Created = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
             LicenseExpires = GetLicenseExpires(model.Term),
             LicensesStd = licensesStd,
             LicensesBiz = licensesBiz,
             PartnerID = 0,
             ProductID = 0,
-            Adr1 = "-",
-            Adr2 = "-",
-            GLN = "-",
-            VatNo = "-",
+            Adr1 = model.Adr1,
+            Adr2 = "0",
+            GLN = "0",
+            VatNo = "0",
             CountryId = 0,
-            Zip = "-"
+            CountryMS = model.Country,
+            Zip = model.Zip,
+            Comment = comment
+            
  
         };
 
@@ -96,13 +99,13 @@ public class LicenseService : ILicenseService
         {
             licenseExpires = DateTime.UtcNow
                 .AddMonths(1)
-                .ToString("yyyyMMddHHmmss");
+                .ToString("yyyyMMddHHmmssff");
         }
         else
         {
             licenseExpires = DateTime.UtcNow
                 .AddYears(1)
-                .ToString("yyyyMMddHHmmss");
+                .ToString("yyyyMMddHHmmssff");
         }
 
         return licenseExpires;

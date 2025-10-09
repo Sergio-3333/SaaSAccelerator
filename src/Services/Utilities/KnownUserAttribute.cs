@@ -45,12 +45,12 @@ public class KnowCustomerAttribute : AuthorizeAttribute, IAuthorizationFilter
 
         // Check if subscription is active
         bool isActive = subscription != null &&
-                        subscription.SubscriptionStatus == "Subscribed";
+                        subscription.SubStatus == "Subscribed";
 
         // Validate customer identity against subscription data
         var isValidCustomer = subscription != null
-            && subscription.PurchaserEmail == email
-            && subscription.PurchaserTenantId == tenantId
+            && subscription.PurEmail == email
+            && subscription.PurTenantId == tenantId
             && isActive;
 
         // If validation fails, redirect to AccessDenied

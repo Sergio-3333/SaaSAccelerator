@@ -25,7 +25,7 @@ public class SubscriptionsRepository : ISubscriptionsRepository
     {
         _context.Subscriptions.Add(subscription);
         _context.SaveChanges();
-        return subscription.MicrosoftId;
+        return subscription.MicrosoftID;
     }
 
     // Updates an existing subscription based on MicrosoftId.
@@ -33,7 +33,7 @@ public class SubscriptionsRepository : ISubscriptionsRepository
     public void UpdateSubscription(string microsoftId, Action<Subscriptions> updateAction)
     {
         var existing = _context.Subscriptions
-            .FirstOrDefault(s => s.MicrosoftId == microsoftId);
+            .FirstOrDefault(s => s.MicrosoftID == microsoftId);
 
         if (existing == null)
             throw new InvalidOperationException("Subscription does not exist.");
@@ -47,12 +47,12 @@ public class SubscriptionsRepository : ISubscriptionsRepository
 
     public bool ExistsByMicrosoftId(string microsoftId)
     {
-        return _context.Subscriptions.Any(s => s.MicrosoftId == microsoftId);
+        return _context.Subscriptions.Any(s => s.MicrosoftID == microsoftId);
     }
 
 
     // Retrieves a subscription by its MicrosoftId.
     public Subscriptions GetSubscriptionByMicrosoftId(string microsoftId) =>
-        _context.Subscriptions.FirstOrDefault(s => s.MicrosoftId == microsoftId);
+        _context.Subscriptions.FirstOrDefault(s => s.MicrosoftID == microsoftId);
 
 }

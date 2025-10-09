@@ -41,11 +41,11 @@ public class SubscriptionService : ISubscriptionService
             throw new InvalidOperationException("Subscription does not exist.");
 
 
-        subscriptionRepository.UpdateSubscription(existing.MicrosoftId, s =>
+        subscriptionRepository.UpdateSubscription(existing.MicrosoftID, s =>
         {
-            s.SubscriptionStatus = model.Status;
-            s.IsActive = model.IsActive;
-            s.AMPPlanId = model.AMPPlanId;
+            s.SubStatus = model.Status;
+            s.Active = model.IsActive;
+            s.PlanId = model.AMPPlanId;
         });
     }
 
@@ -63,18 +63,19 @@ public class SubscriptionService : ISubscriptionService
     {
         return new Subscriptions
         {
-            MicrosoftId = model.MicrosoftId,
-            SubscriptionStatus = model.Status,
-            AMPPlanId = model.AMPPlanId,
-            IsActive = model.IsActive,
-            UserId = model.UserId,
-            PurchaserEmail = model.PurchaserEmail,
-            PurchaserTenantId = model.PurchaserTenantId,
+            MicrosoftID = model.MicrosoftId,
+            SubStatus = model.Status,
+            PlanId = model.AMPPlanId,
+            Active = model.IsActive,
+            UserID = model.UserId,
+            PurEmail = model.PurchaserEmail,
+            PurTenantId = model.PurchaserTenantId,
             AutoRenew = model.AutoRenew,
             Term = model.Term,
             StartDate = model.StartDate,
             EndDate = CalculateLicenseEndDate(model.Term),
-            Name = ConvertLicenseType(model.AMPPlanId)
+            SubName = ConvertLicenseType(model.AMPPlanId),
+            Country = model.Country
         };
     }
 
@@ -97,7 +98,7 @@ public class SubscriptionService : ISubscriptionService
     {
         if (string.Equals(ampPlanId, "atxttst001", StringComparison.OrdinalIgnoreCase))
         {
-            return "Ant Text 365 Standart";
+            return "Ant Text 365 Standard";
         }
         else
         {

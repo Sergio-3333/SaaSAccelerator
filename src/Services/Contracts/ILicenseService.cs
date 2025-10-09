@@ -7,9 +7,6 @@ public interface ILicenseService
     // Returns a license by its ID.
     Licenses GetLicenseById(SubscriptionInputModel model);
 
-    // Returns a license by its license key.
-    Licenses GetByLicenseKey(string licenseKey);
-
     // Returns all licenses associated with a Microsoft tenant ID.
     Licenses GetLicenseByMicrosoftId(string microsoftId);
 

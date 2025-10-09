@@ -47,10 +47,10 @@ public class WebhookHandler : IWebhookHandler
             return;
         }
 
-         subscriptionRepository.UpdateSubscription(subscription.MicrosoftId, s =>
+         subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
         {
-            s.SubscriptionStatus = "Active";
-            s.IsActive = true;
+            s.SubStatus = "Active";
+            s.Active = true;
         });
 
 
@@ -76,10 +76,10 @@ public class WebhookHandler : IWebhookHandler
         }
 
 
-        subscriptionRepository.UpdateSubscription(subscription.MicrosoftId, s =>
+        subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
         {
-            s.SubscriptionStatus = "Unsubscribe";
-            s.IsActive = false;
+            s.SubStatus = "Unsubscribe";
+            s.Active = false;
             s.AutoRenew = false;
         });
 
@@ -87,7 +87,7 @@ public class WebhookHandler : IWebhookHandler
         var license = licensesRepository.GetLicenseByMicrosoftId(payload.SubscriptionId);
         if (license != null)
         {
-            licensesRepository.UpdateLicense(license.MicrosoftId, l => l.Status = 3);
+            licensesRepository.UpdateLicense(license.MicrosoftID, l => l.Status = 3);
         }
         else
         {
@@ -99,14 +99,14 @@ public class WebhookHandler : IWebhookHandler
         var latestLine = existingLine;
         var newLine = new SubLines
         {
-            MicrosoftId = latestLine.MicrosoftId,
+            MicrosoftID = latestLine.MicrosoftID,
             ChargeDate = DateTime.UtcNow,
             Status = 0,
-            AMPlan = latestLine.AMPlan,
+            PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
-            Currency = latestLine.Currency,
-            Amount = latestLine.Amount
+            Plan = latestLine.Plan,
+            USDTotal = 0
         };
 
         // 3️⃣ Guardar en la BDD
@@ -131,7 +131,7 @@ public class WebhookHandler : IWebhookHandler
             return;
         }
 
-            licensesRepository.UpdateLicense(license.MicrosoftId, l =>
+            licensesRepository.UpdateLicense(license.MicrosoftID, l =>
             {
                 l.PurchasedLicenses = payload.Quantity;
             });
@@ -156,10 +156,10 @@ public class WebhookHandler : IWebhookHandler
             return;
         }
 
-        subscriptionRepository.UpdateSubscription(subscription.MicrosoftId, s =>
+        subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
         {
-            s.SubscriptionStatus = "Suspended";
-            s.IsActive = false;
+            s.SubStatus = "Suspended";
+            s.Active = false;
             s.AutoRenew = false;
         });
 
@@ -167,7 +167,7 @@ public class WebhookHandler : IWebhookHandler
         // 2️⃣ Actualizar licencias asociadas
         var license = licensesRepository.GetLicenseByMicrosoftId(payload.SubscriptionId);
 
-        licensesRepository.UpdateLicense(license.MicrosoftId, l =>
+        licensesRepository.UpdateLicense(license.MicrosoftID, l =>
             {
                 l.Status = 3;
             });
@@ -178,14 +178,14 @@ public class WebhookHandler : IWebhookHandler
         var latestLine = existingLine;
         var newLine = new SubLines
         {
-            MicrosoftId = latestLine.MicrosoftId,
+            MicrosoftID = latestLine.MicrosoftID,
             ChargeDate = DateTime.UtcNow,
             Status = 0,
-            AMPlan = latestLine.AMPlan,
+            PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
-            Currency = latestLine.Currency,
-            Amount = latestLine.Amount
+            Plan = latestLine.Plan,
+            USDTotal = 0
         };
 
         // 3️⃣ Guardar en la BDD
@@ -223,18 +223,18 @@ public class WebhookHandler : IWebhookHandler
             newExpiry = DateTime.UtcNow.AddMonths(1);
         }
 
-        subscriptionRepository.UpdateSubscription(subscription.MicrosoftId, s =>
+        subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
         {
             s.EndDate = newExpiry;
-            s.SubscriptionStatus = "Active";
-            s.IsActive = true;
+            s.SubStatus = "Active";
+            s.Active = true;
             s.AutoRenew = true;
         });
 
 
         var license = licensesRepository.GetLicenseByMicrosoftId(payload.SubscriptionId);
 
-        licensesRepository.UpdateLicense(license.MicrosoftId, l =>
+        licensesRepository.UpdateLicense(license.MicrosoftID, l =>
         {
             l.Status = 2;
             l.LicenseExpires = newExpiry.ToString("yyyyMMddHHmmss");
@@ -246,14 +246,14 @@ public class WebhookHandler : IWebhookHandler
         var latestLine = existingLine;
         var newLine = new SubLines
         {
-            MicrosoftId = latestLine.MicrosoftId,
+            MicrosoftID = latestLine.MicrosoftID,
             ChargeDate = DateTime.UtcNow,
             Status = 1,
-            AMPlan = latestLine.AMPlan,
+            PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
-            Currency = latestLine.Currency,
-            Amount = latestLine.Amount
+            Plan = latestLine.Plan,
+            USDTotal = latestLine.USDTotal
         };
 
         // 3️⃣ Guardar en la BDD
@@ -289,18 +289,18 @@ public class WebhookHandler : IWebhookHandler
             newExpiry = DateTime.UtcNow.AddMonths(1);
         }
 
-        subscriptionRepository.UpdateSubscription(subscription.MicrosoftId, s =>
+        subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
         {
             s.EndDate = newExpiry;
-            s.SubscriptionStatus = "Active";
-            s.IsActive = true;
+            s.SubStatus = "Active";
+            s.Active = true;
             s.AutoRenew = true;
         });
 
 
         var license = licensesRepository.GetLicenseByMicrosoftId(payload.SubscriptionId);
 
-        licensesRepository.UpdateLicense(license.MicrosoftId, l =>
+        licensesRepository.UpdateLicense(license.MicrosoftID, l =>
         {
             l.Status = 2;
             l.LicenseExpires = newExpiry.ToString("yyyyMMddHHmmss");
@@ -312,14 +312,14 @@ public class WebhookHandler : IWebhookHandler
         var latestLine = existingLine;
         var newLine = new SubLines
         {
-            MicrosoftId = latestLine.MicrosoftId,
+            MicrosoftID = latestLine.MicrosoftID,
             ChargeDate = DateTime.UtcNow,
             Status = 1,
-            AMPlan = latestLine.AMPlan,
+            PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
-            Currency = latestLine.Currency,
-            Amount = latestLine.Amount
+            Plan = latestLine.Plan,
+            USDTotal = latestLine.USDTotal
         };
 
         // 3️⃣ Guardar en la BDD

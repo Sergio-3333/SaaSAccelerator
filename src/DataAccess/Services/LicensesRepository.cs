@@ -28,16 +28,7 @@ public class LicensesRepository : ILicensesRepository
 
     }
 
-    // Returns the next available LicenseID by incrementing the highest existing one.
-    public int GetNextLicenseId()
-    {
-        var lastId = _context.Licenses
-            .OrderByDescending(l => l.LicenseID)
-            .Select(l => l.LicenseID)
-            .FirstOrDefault();
 
-        return lastId + 1;
-    }
 
     // Adds a new license to the database and returns its generated LicenseID.
     public int CreateLicense(Licenses license)
@@ -59,7 +50,7 @@ public class LicensesRepository : ILicensesRepository
         }
 
         var entity = _context.Licenses
-            .FirstOrDefault(x => x.MicrosoftId == microsoftId);
+            .FirstOrDefault(x => x.MicrosoftID == microsoftId);
 
         if (entity == null)
         {
@@ -73,18 +64,14 @@ public class LicensesRepository : ILicensesRepository
 
 
 
-
     // Retrieves a license by its LicenseID.
     public Licenses GetById(int licenseId) =>
         _context.Licenses.FirstOrDefault(l => l.LicenseID == licenseId);
 
-    // Retrieves a license by its LicenseKey.
-    public Licenses GetByLicenseKey(string licenseKey) =>
-        _context.Licenses.FirstOrDefault(l => l.LicenseKey == licenseKey);
 
     // Retrieves all licenses associated with a given MicrosoftId.
     public Licenses GetLicenseByMicrosoftId(string microsoftId) =>
-        _context.Licenses.FirstOrDefault(l => l.MicrosoftId == microsoftId);
+        _context.Licenses.FirstOrDefault(l => l.MicrosoftID == microsoftId);
 
     // Retrieves a license by the purchaser's email.
     public Licenses GetByEmail(string email) =>

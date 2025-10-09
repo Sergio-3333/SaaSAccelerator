@@ -22,19 +22,54 @@ public class SubLinesService : ISubLinesService
 
         var subLine = new SubLines
         {
-            MicrosoftId = model.MicrosoftId,
+            MicrosoftID = model.MicrosoftId,
             ChargeDate = DateTime.UtcNow,
             Status = 1, 
-            AMPlan = model.AMPlan,
+            PlanTest = model.AMPlan,
             UsersQ = model.UsersQ,
             Country = model.Country,
-            Currency = model.Currency,
-            Amount = model.Amount ?? 0 
+            Plan = ConvertLicenseType(model.AMPPlanId),
+            USDTotal = CalculateTotal(model.AMPPlanId, model.Term, model.UsersQ)
         };
 
         return subLinesRepository.AddNewLine(subLine);
     }
 
+
+    private static decimal CalculateTotal(string ampPlanId, string term, int quantity)
+    {
+        decimal pricePerUser = 0m;
+
+        if (string.Equals(ampPlanId, "atxttst001", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
+                pricePerUser = 14.99m;
+            else if (string.Equals(term, "P1Y", StringComparison.OrdinalIgnoreCase))
+                pricePerUser = 143.90m;
+        }
+        else if (string.Equals(ampPlanId, "atxttst002", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
+                pricePerUser = 18.99m;
+            else if (string.Equals(term, "P1Y", StringComparison.OrdinalIgnoreCase))
+                pricePerUser = 182.30m;
+        }
+
+        return quantity * pricePerUser;
+    }
+
+
+    private static string ConvertLicenseType(string ampPlanId)
+    {
+        if (string.Equals(ampPlanId, "atxttst001", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Ant Text 365 Standard";
+        }
+        else
+        {
+            return "Ant Text 365 Business";
+        }
+    }
 
 
     // Retrieves all SubLine records associated with a given Microsoft ID

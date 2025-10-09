@@ -55,7 +55,7 @@ public class ClientsService : IClientsService
 
         if (existingClient != null)
         {
-            existingClient.MicrosoftId = model.MicrosoftId;
+            existingClient.MicrosoftID = model.MicrosoftId;
 
             // Si el cliente no tiene LicenseId asignado, lo actualizamos
             if (existingClient.LicenseID == 0)
@@ -77,11 +77,49 @@ public class ClientsService : IClientsService
             var newClient = new Clients
             {
                 OWAEmail = model.PurchaserEmail,
-                MicrosoftId = model.MicrosoftId,
+                MicrosoftID = model.MicrosoftId,
                 LicenseID = license.LicenseID,
                 LicenseType = licenseType,
-                LastAccessed = "-",
-                Created = "-"
+                LastAccessed = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
+                Created = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
+                ContactInfoCompany = " ",
+                ContactInfoContact = model.Name,
+                ContactInfoPhone = " ",
+                ContactInfoEmail = " ",
+                UsageCounter = 0,
+                ContactInfoOK = "Yes",
+                PartnerID = 0,
+                OWADispName = model.Name,
+                OWAEWSURL = " ",
+                OWAEWSUID = " ",
+                OWAEWSPWD = " ",
+                OWAPersonColor = 0,
+                OWAInitials = " ",
+                OWAHasImage = 0,
+                OWADispLang = " ",
+                LastTokenRefresh = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
+                UseEWS = 0,
+                TestMode = 0,
+                TimeZone = 0,
+                UserDevice = "0",
+                TradeID = 0,
+                FirstEmailSent = 0,
+                ClientTypeID = 0,
+                SkipConsent = 0,
+                TrialDays = 0,
+                CampaignGUID = "0",
+                LastLocCheck = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
+                NewsLetterUsageCounter = 0,
+                ContactInfoTitle = "0",
+                ContactInfoWebSite = "0",
+                ContactInfoAddress = "0",
+                ContactInfoLinkedIn = "0",
+                FlowUsageCounter = 0,
+                CJMode = 0,
+                InternalNote = " ",
+                InstallDateATC = " ",
+                LastProcessedSkipConsent = 0
+
             };
 
             clientsRepository.CreateClient(newClient);
@@ -99,6 +137,8 @@ public class ClientsService : IClientsService
             "atxttst002" => 2,
             "atxttst003" => 3,
             "atxttst004" => 4,
+            "atxttst005" => 5,
+
             _ => throw new InvalidOperationException("Unrecognized plan")
         };
 
