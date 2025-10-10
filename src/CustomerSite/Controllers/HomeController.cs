@@ -65,12 +65,11 @@ public class HomeController : Controller
 
         var raw = await res.Content.ReadAsStringAsync();
 
-        Console.WriteLine($"[DEBUG] Respuesta de Azure AD para {resourceBase}: {res.StatusCode}\n{raw}");
-        logger.LogInformation($"Respuesta de Azure AD para {resourceBase}: {res.StatusCode}\n{raw}");
+        Console.WriteLine($"[DEBUG] Response from Azure AD to {resourceBase}: {res.StatusCode}\n{raw}");
 
         if (!res.IsSuccessStatusCode)
         {
-            throw new Exception($"No se pudo obtener token para {resourceBase}. Status: {res.StatusCode}\n{raw}");
+            throw new Exception($"We couldnt take the token for: {resourceBase}. Status: {res.StatusCode}\n{raw}");
         }
 
         try
@@ -84,18 +83,16 @@ public class HomeController : Controller
             else if (doc.RootElement.TryGetProperty("error", out var error))
             {
                 var desc = doc.RootElement.GetProperty("error_description").GetString();
-                logger.LogError($"Error de AAD al pedir token para {resourceBase}: {error.GetString()} - {desc}");
-                throw new Exception($"Error de AAD: {error.GetString()} - {desc}");
+                throw new Exception($"Error from AAD: {resourceBase}: {error.GetString()} - {desc}\"");
             }
             else
             {
-                logger.LogError($"Respuesta inesperada al pedir token para {resourceBase}: {raw}");
-                throw new Exception("Respuesta inesperada de Azure AD");
+                throw new Exception($"Wrong answer from Azure AD, {resourceBase}: {raw}");
             }
         }
         catch (JsonException)
         {
-            logger.LogError($"Respuesta no JSON al pedir token para {resourceBase}: {raw}");
+            logger.LogError($"Answer of Json: {resourceBase}: {raw}");
             throw;
         }
     }
@@ -113,7 +110,7 @@ public class HomeController : Controller
             return null;
 
         var fulfillmentJson = JsonSerializer.Serialize(details, new JsonSerializerOptions { WriteIndented = true });
-        logger.LogInformation($"[Fulfillment API] JSON recibido:\n{fulfillmentJson}");
+        logger.LogInformation($"[Fulfillment API] JSON recived:\n{fulfillmentJson}");
 
         model.MicrosoftId = subscriptionId.ToString();
         model.PurchaserTenantId = details.Purchaser?.TenantId?.ToString();
@@ -141,7 +138,7 @@ public class HomeController : Controller
             var graphUrl = $"https://graph.microsoft.com/v1.0/organization/{model.PurchaserTenantId}";
             var graphRes = await http.GetAsync(graphUrl);
             var graphJson = await graphRes.Content.ReadAsStringAsync();
-            logger.LogInformation($"[Graph API] JSON recibido:\n{graphJson}");
+            logger.LogInformation($"[Graph API] JSON recived:\n{graphJson}");
 
             if (graphRes.IsSuccessStatusCode)
             {
@@ -149,14 +146,12 @@ public class HomeController : Controller
 
                 JsonElement org;
 
-                // Si la respuesta tiene "value" (array), úsalo
                 if (doc.RootElement.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.Array && value.GetArrayLength() > 0)
                 {
                     org = value[0];
                 }
                 else
                 {
-                    // Si no, la respuesta es un objeto único
                     org = doc.RootElement;
                 }
 
@@ -176,7 +171,7 @@ public class HomeController : Controller
             }
             else
             {
-                logger.LogWarning($"Error al llamar a Graph API: {graphRes.StatusCode}\n{graphJson}");
+                logger.LogWarning($"Error calling Graph API: {graphRes.StatusCode}\n{graphJson}");
             }
 
 
@@ -186,7 +181,7 @@ public class HomeController : Controller
 
             var userRes = await http.GetAsync(userUrl);
             var userJson = await userRes.Content.ReadAsStringAsync();
-            logger.LogInformation($"[Graph API /users] JSON recibido:\n{userJson}");
+            logger.LogInformation($"[Graph API /users] JSON recived:\n{userJson}");
 
             if (userRes.IsSuccessStatusCode)
             {
@@ -208,7 +203,7 @@ public class HomeController : Controller
             }
             else
             {
-                logger.LogWarning($"Error al llamar a Graph API /users: {userRes.StatusCode}\n{userJson}");
+                logger.LogWarning($"Error calling Graph API /users: {userRes.StatusCode}\n{userJson}");
             }
 
 
@@ -224,18 +219,16 @@ public class HomeController : Controller
     public async Task<IActionResult> Index(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
-            return Content("Error: token vacío");
+            return Content("Error: token is empty");
 
-        logger.LogInformation($"Token recibido: {token}");
+        logger.LogInformation($"Token recived: {token}");
 
-        // 1. Resolver suscripción con el token
         ResolvedSubscription resolved = await apiService.ResolveAsync(token);
         if (resolved?.Id == null || resolved.Id == Guid.Empty)
-            return Content("Error: no se pudo resolver la suscripción");
+            return Content("Error: subscription couldnt be resolved");
 
-        logger.LogInformation($"SubscriptionId resuelto: {resolved.Id}");
+        logger.LogInformation($"SubscriptionId resolved: {resolved.Id}");
 
-        // 2. Obtener datos completos desde Fulfillment API
         var model = await GetSubscriptionInputModelAsync(
             resolved.Id.Value,
             _config.TenantId,
@@ -244,13 +237,11 @@ public class HomeController : Controller
         );
 
         if (model == null)
-            return Content("Error: no se pudo obtener el modelo de suscripción");
+            return Content("Error: we cannot take the model of the subscription");
 
-        // 3. Activar en Microsoft
         var subscriptionFromApi = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
         await apiService.ActivateSubscriptionAsync(subscriptionFromApi);
 
-        // 4. Guardar en BDD solo si no existe ya ese MicrosoftId
         if (!subscriptionsRepository.ExistsByMicrosoftId(model.MicrosoftId))
         {
             subscriptionService.CreateSubscription(model);
@@ -266,7 +257,6 @@ public class HomeController : Controller
 
         clientsService.CreateOrUpdateClientFromSubscription(model);
 
-        // 5. Redirigir al sitio final
         return Redirect("https://www.anttext.com/");
     }
 

@@ -36,7 +36,6 @@ public class AzureWebhookController : ControllerBase
     {
         try
         {
-            // Validación JWT si el header está presente
             if (Request.Headers.ContainsKey("Authorization"))
             {
                 try

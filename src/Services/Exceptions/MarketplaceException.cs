@@ -2,14 +2,10 @@
 
 namespace Marketplace.SaaS.Accelerator.Services.Exceptions;
 
-/// <summary>
-/// Excepción personalizada para errores del Marketplace.
-/// </summary>
+
 public class MarketplaceException : ApplicationException
 {
-    /// <summary>
-    /// Código de error opcional para categorizar el fallo.
-    /// </summary>
+
     public string ErrorCode { get; set; }
 
     public MarketplaceException() : base() { }

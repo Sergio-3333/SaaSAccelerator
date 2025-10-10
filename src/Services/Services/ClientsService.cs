@@ -115,7 +115,6 @@ public class ClientsService : IClientsService
                 CJMode = 0,
                 InternalNote = " ",
                 InstallDateATC = " ",
-                LastProcessedSkipConsent = 0,
                 ContactInfoCountryID = 0
 
             };

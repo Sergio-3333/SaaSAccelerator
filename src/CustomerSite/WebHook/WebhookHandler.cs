@@ -33,12 +33,12 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task SubscribedAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogInformation($"[Webhook] Activando automáticamente suscripción {payload.SubscriptionId}");
+        logger.LogInformation($"[Webhook] Activating the subscription {payload.SubscriptionId}");
 
         var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(payload.SubscriptionId);
         if (subscription == null)
         {
-            logger.LogWarning($"Suscripción {payload.SubscriptionId} no encontrada en la BDD. No se puede activar.");
+            logger.LogWarning($"Subscription {payload.SubscriptionId} is not in the DBB. Impossible to active");
             return;
         }
 
@@ -49,7 +49,7 @@ public class WebhookHandler : IWebhookHandler
         });
 
 
-        logger.LogInformation($"Suscripción {payload.SubscriptionId} actualizada a estado Active.");
+        logger.LogInformation($"Subscription {payload.SubscriptionId} updated to Active");
     }
 
 
@@ -59,14 +59,13 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task UnsubscribedAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogInformation($"[Webhook] Cancelación de suscripción {payload.SubscriptionId}");
+        logger.LogInformation($"[Webhook] Event for cancel the subscription {payload.SubscriptionId}");
 
-        // 1️⃣ Actualizar la suscripción principal
         var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(payload.SubscriptionId);
 
         if (subscription == null)
         {
-            logger.LogWarning($"Suscripción {payload.SubscriptionId} no encontrada en la BDD.");
+            logger.LogWarning($"Subscription {payload.SubscriptionId} is not in the DBB.");
             return;
         }
 
@@ -86,7 +85,7 @@ public class WebhookHandler : IWebhookHandler
         }
         else
         {
-            logger.LogWarning($"No se encontró licencia con MicrosoftId={payload.SubscriptionId}");
+            logger.LogWarning($"There is no license with MicrosoftId={payload.SubscriptionId}");
         }
 
         var existingLine = subLinesRepository.GetByMicrosoftId(payload.SubscriptionId);
@@ -104,7 +103,6 @@ public class WebhookHandler : IWebhookHandler
             USDTotal = latestLine.USDTotal
         };
 
-        // 3️⃣ Guardar en la BDD
         subLinesRepository.AddNewLine(newLine);
 
     }
@@ -116,13 +114,12 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task ChangeQuantityAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogInformation($"[Webhook] Cambio de cantidad en licencia de suscripción {payload.SubscriptionId}");
+        logger.LogInformation($"[Webhook] Event for change the quantity on: {payload.SubscriptionId}");
 
-        // 1️⃣ Recuperar la licencia asociada a la suscripción
         var license = licensesRepository.GetLicenseByMicrosoftId(payload.SubscriptionId?.Trim());
         if (license == null)
         {
-            logger.LogWarning($"No se encontró licencia para la suscripción {payload.SubscriptionId}");
+            logger.LogWarning($"Subscription {payload.SubscriptionId} is not in the DBB");
             return;
         }
 
@@ -131,7 +128,7 @@ public class WebhookHandler : IWebhookHandler
                 l.PurchasedLicenses = payload.Quantity;
             });
 
-        logger.LogInformation($"Licencia de suscripción {payload.SubscriptionId} actualizada con nueva cantidad: {payload.Quantity}");
+        logger.LogInformation($"Subscription: {payload.SubscriptionId} updated with new quantity: {payload.Quantity}");
     }
 
 
@@ -141,13 +138,12 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task SuspendedAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogInformation($"[Webhook] Suspensión de suscripción {payload.SubscriptionId}");
+        logger.LogInformation($"[Webhook] Event for suspending subscription: {payload.SubscriptionId}");
 
-        // 1️⃣ Actualizar la suscripción
         var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(payload.SubscriptionId);
         if (subscription == null)
         {
-            logger.LogWarning($"Suscripción {payload.SubscriptionId} no encontrada en la BDD.");
+            logger.LogWarning($"Subscription {payload.SubscriptionId} is not in the DBB.");
             return;
         }
 
@@ -159,7 +155,6 @@ public class WebhookHandler : IWebhookHandler
         });
 
 
-        // 2️⃣ Actualizar licencias asociadas
         var license = licensesRepository.GetLicenseByMicrosoftId(payload.SubscriptionId);
 
         licensesRepository.UpdateLicense(license.MicrosoftID, l =>
@@ -183,10 +178,9 @@ public class WebhookHandler : IWebhookHandler
             USDTotal = latestLine.USDTotal
         };
 
-        // 3️⃣ Guardar en la BDD
         subLinesRepository.AddNewLine(newLine);
 
-        logger.LogInformation($"Suscripción {payload.SubscriptionId} y licencias asociadas marcadas como suspendidas.");
+        logger.LogInformation($"Subscription {payload.SubscriptionId} and licenses are suspended now");
     }
 
 
@@ -196,14 +190,13 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task ReinstatedAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogInformation($"[Webhook]Reinstaurada la suscripcion: {payload.SubscriptionId}");
+        logger.LogInformation($"[Webhook] Event for reinstated the subscription: {payload.SubscriptionId}");
 
-        // 1️⃣ Actualizar la suscripción
         var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(payload.SubscriptionId);
 
         if (subscription == null)
         {
-            logger.LogWarning($"Suscripción {payload.SubscriptionId} no encontrada en la BDD.");
+            logger.LogWarning($"Subscription {payload.SubscriptionId} is not in the DBB.");
             return;
         }
 
@@ -251,10 +244,9 @@ public class WebhookHandler : IWebhookHandler
             USDTotal = latestLine.USDTotal
         };
 
-        // 3️⃣ Guardar en la BDD
         subLinesRepository.AddNewLine(newLine);
 
-        logger.LogInformation($"Suscripción {payload.SubscriptionId} y licencias asociadas marcadas como suspendidas.");
+        logger.LogInformation($"Subscription {payload.SubscriptionId} and licenses are active again");
     }
 
 
@@ -262,14 +254,13 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task RenewedAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogInformation($"[Webhook]Reinstaurada la suscripcion: {payload.SubscriptionId}");
+        logger.LogInformation($"[Webhook] Event for the renew of the subscription: {payload.SubscriptionId}");
 
-        // 1️⃣ Actualizar la suscripción
         var subscription = subscriptionRepository.GetSubscriptionByMicrosoftId(payload.SubscriptionId);
 
         if (subscription == null)
         {
-            logger.LogWarning($"Suscripción {payload.SubscriptionId} no encontrada en la BDD.");
+            logger.LogWarning($"Subscription {payload.SubscriptionId} is not in the DBB.");
             return;
         }
 
@@ -317,10 +308,9 @@ public class WebhookHandler : IWebhookHandler
             USDTotal = latestLine.USDTotal
         };
 
-        // 3️⃣ Guardar en la BDD
         subLinesRepository.AddNewLine(newLine);
 
-        logger.LogInformation($"Suscripción {payload.SubscriptionId} y licencias asociadas marcadas como suspendidas.");
+        logger.LogInformation($"Susbcription {payload.SubscriptionId} and licenses are now renewed");
     }
 
 
@@ -328,7 +318,6 @@ public class WebhookHandler : IWebhookHandler
 
     public async Task UnknownActionAsync(AzureWebHookPayLoad payload)
     {
-        logger.LogWarning($"[Webhook] Acción desconocida para suscripción {payload.SubscriptionId} con estado {payload.Status}");
-        // Aquí podrías registrar el evento en una tabla de auditoría
+        logger.LogWarning($"[Webhook] Action for the subscription {payload.SubscriptionId} with the state {payload.Status} is not aviable");
     }
 }

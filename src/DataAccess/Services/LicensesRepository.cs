@@ -42,7 +42,7 @@ public class LicensesRepository : ILicensesRepository
     {
         if (string.IsNullOrWhiteSpace(microsoftId))
         {
-            logger.LogError("[Repo] El MicrosoftId recibido es NULL o vacío. No se puede actualizar.");
+            logger.LogError("[Repo] MicrosoftId is null or empty. We cannot update it");
             return;
         }
 
@@ -51,7 +51,7 @@ public class LicensesRepository : ILicensesRepository
 
         if (entity == null)
         {
-            logger.LogWarning($"[Repo] No se encontró License con MicrosoftId={microsoftId} para actualizar.");
+            logger.LogWarning($"[Repo] We dont find the license with MicrosoftId={microsoftId} for update it.");
             return;
         }
 

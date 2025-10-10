@@ -7,9 +7,8 @@ namespace Marketplace.SaaS.Accelerator.DataAccess;
 
 public class SubscriptionInputModel
 {
-    // --- Datos de la suscripción (tabla Subscriptions) ---
 
-    [JsonPropertyName("Id")] // o "subscriptionId" según el payload
+    [JsonPropertyName("Id")] 
     public string MicrosoftId { get; set; }
 
     public int LicenseId { get; set;  }
@@ -21,7 +20,7 @@ public class SubscriptionInputModel
     public string Status { get; set; }
 
 
-    [JsonPropertyName("planId")] // o "offerId"
+    [JsonPropertyName("planId")] 
     public string AMPPlanId { get; set; }
 
     [JsonPropertyName("isActive")]
@@ -30,10 +29,10 @@ public class SubscriptionInputModel
     [JsonPropertyName("userId")]
     public string UserId { get; set; }
 
-    [JsonPropertyName("emailId")] // o "purchaserEmail"
+    [JsonPropertyName("emailId")] 
     public string PurchaserEmail { get; set; }
 
-    [JsonPropertyName("tenantId")] // o "purchaserTenantId"
+    [JsonPropertyName("tenantId")] 
     public string PurchaserTenantId { get; set; }
 
     [JsonPropertyName("term")]
@@ -49,12 +48,11 @@ public class SubscriptionInputModel
     public bool? AutoRenew { get; set; }
 
 
-    // --- Datos enriquecidos desde Graph API (para Licenses/Clients) ---
 
     [JsonPropertyName("displayName")]
     public string Name { get; set; }
 
-    [JsonPropertyName("mail")] // o "userPrincipalName"
+    [JsonPropertyName("mail")] 
     public string Email { get; set; }
 
     [JsonPropertyName("mobilePhone")] 
@@ -76,8 +74,6 @@ public class SubscriptionInputModel
     public string Zip { get; set; }
 
 
-
-    // --- Datos para la línea de facturación (tabla SubLines) ---
 
     [JsonPropertyName("chargeDate")]
     public DateTime? ChargeDate { get; set; }

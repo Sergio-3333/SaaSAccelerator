@@ -95,8 +95,6 @@ public partial class Clients
 
     public string? InternalNote { get; set; }
 
-    public int? LastProcessedSkipConsent { get; set; }
-
     public string? InstallDateATC { get; set; }
 
     public Licenses License { get; set; } = null!;

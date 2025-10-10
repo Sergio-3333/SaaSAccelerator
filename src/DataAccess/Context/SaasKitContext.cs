@@ -130,7 +130,6 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.ContactInfoAddress).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.InternalNote).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.InstallDateATC).HasMaxLength(100).IsUnicode(false);
-            entity.Property(e => e.LastProcessedSkipConsent);
             entity.Property(e => e.UseEWS);
             entity.Property(e => e.NewsLetterUsageCounter);
             entity.Property(e => e.FlowUsageCounter);
