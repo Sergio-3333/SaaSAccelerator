@@ -1,6 +1,5 @@
 ﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
-using System.Collections.Generic;
 
 public interface ILicenseService
 {

@@ -3,7 +3,6 @@ using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using System;
-using System.Collections.Generic;
 
 public class SubLinesService : ISubLinesService
 {
@@ -23,8 +22,8 @@ public class SubLinesService : ISubLinesService
         var subLine = new SubLines
         {
             MicrosoftID = model.MicrosoftId,
-            ChargeDate = DateTime.UtcNow,
-            Status = 1, 
+            ChargeDate = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
+            Status = "Active", 
             PlanTest = model.AMPlan,
             UsersQ = model.UsersQ,
             Country = model.Country,

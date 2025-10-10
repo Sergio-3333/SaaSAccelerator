@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using Marketplace.SaaS.Accelerator.Services.Models.Attributes;
-using Marketplace.SaaS.Accelerator.Services.WebHook;
 
 
 namespace Marketplace.SaaS.Accelerator.DataAccess;

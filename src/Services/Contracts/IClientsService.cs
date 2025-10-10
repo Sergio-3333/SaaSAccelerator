@@ -1,5 +1,4 @@
-﻿using Marketplace.SaaS.Accelerator.Services.Models;
-using Marketplace.SaaS.Accelerator.DataAccess.Entities;
+﻿using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.DataAccess;
 
 namespace Marketplace.SaaS.Accelerator.Services.Contracts;

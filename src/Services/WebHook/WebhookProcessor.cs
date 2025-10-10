@@ -1,5 +1,4 @@
-﻿using Marketplace.SaaS.Accelerator.DataAccess;
-using Marketplace.SaaS.Accelerator.Services.Configurations;
+﻿using Marketplace.SaaS.Accelerator.Services.Configurations;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Models;
 using Marketplace.SaaS.Accelerator.Services.WebHook;

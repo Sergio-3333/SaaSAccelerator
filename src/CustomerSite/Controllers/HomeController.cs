@@ -1,13 +1,8 @@
-﻿// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
-using Marketplace.SaaS.Accelerator.Services.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -15,7 +10,7 @@ using Marketplace.SaaS.Accelerator.DataAccess;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Marketplace.SaaS.Models;
-using static System.Net.WebRequestMethods;
+using Marketplace.SaaS.Accelerator.Services.Configurations;
 
 namespace Marketplace.SaaS.Accelerator.CustomerSite.Controllers;
 
@@ -29,6 +24,7 @@ public class HomeController : Controller
     private readonly SubscriptionService subscriptionService;
     private readonly ClientsService clientsService;
     private readonly SubscriptionsRepository subscriptionsRepository;
+    private readonly SaaSApiClientConfiguration _config;
 
 
     public HomeController(
@@ -38,7 +34,8 @@ public class HomeController : Controller
          SubLinesService subLinesService,
          ClientsService clientsService,
          SubscriptionsRepository subscriptionsRepository,
-         ILogger<HomeController> logger)
+         ILogger<HomeController> logger,
+         SaaSApiClientConfiguration _config)
     {
         this.apiService = apiService;
         this.subscriptionService = subscriptionService;
@@ -47,6 +44,7 @@ public class HomeController : Controller
         this.clientsService = clientsService;
         this.subscriptionsRepository = subscriptionsRepository;
         this.logger = logger;
+        this._config = _config;
     }
 
     private async Task<string> GetTokenAsync(string tenantId, string clientId, string clientSecret, string resourceBase)
@@ -238,7 +236,12 @@ public class HomeController : Controller
         logger.LogInformation($"SubscriptionId resuelto: {resolved.Id}");
 
         // 2. Obtener datos completos desde Fulfillment API
-
+        var model = await GetSubscriptionInputModelAsync(
+            resolved.Id.Value,
+            _config.TenantId,
+            _config.ClientId,
+            _config.ClientSecret
+        );
 
         if (model == null)
             return Content("Error: no se pudo obtener el modelo de suscripción");

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 namespace Marketplace.SaaS.Accelerator.DataAccess.Contracts;

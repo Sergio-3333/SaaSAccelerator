@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using System.Linq;
-using Marketplace.SaaS.Accelerator.Services.Utilities;
 
 public class KnowCustomerAttribute : AuthorizeAttribute, IAuthorizationFilter
 {
@@ -19,8 +18,6 @@ public class KnowCustomerAttribute : AuthorizeAttribute, IAuthorizationFilter
     public void OnAuthorization(AuthorizationFilterContext context)
     {
         // Extract email claim from the authenticated user
-        var email = context.HttpContext.User?.Claims
-            .FirstOrDefault(c => c.Type == ClaimConstants.CLAIM_EMAILADDRESS)?.Value;
 
         // Extract tenant ID claim
         var tenantId = context.HttpContext.User?.Claims
@@ -49,7 +46,6 @@ public class KnowCustomerAttribute : AuthorizeAttribute, IAuthorizationFilter
 
         // Validate customer identity against subscription data
         var isValidCustomer = subscription != null
-            && subscription.PurEmail == email
             && subscription.PurTenantId == tenantId
             && isActive;
 

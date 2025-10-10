@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 public partial class Subscriptions
+
 {
 
     [Key]
@@ -29,9 +30,9 @@ public partial class Subscriptions
 
     public string Term { get; set; } 
 
-    public DateTime? StartDate { get; set; } 
+    public string StartDate { get; set; } 
 
-    public DateTime? EndDate { get; set; } 
+    public string EndDate { get; set; } 
 
     public bool? AutoRenew { get; set; }
 

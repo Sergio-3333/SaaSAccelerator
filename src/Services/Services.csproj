@@ -26,9 +26,11 @@
   <ItemGroup>
     <None Remove="WebHook\" />
     <None Remove="Configurations\" />
+    <None Remove="Exceptions\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="WebHook\" />
     <Folder Include="Configurations\" />
+    <Folder Include="Exceptions\" />
   </ItemGroup>
 </Project>

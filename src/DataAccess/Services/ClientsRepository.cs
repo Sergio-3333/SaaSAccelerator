@@ -33,7 +33,10 @@ public class ClientsRepository : IClientsRepository
         if (existing == null)
             throw new InvalidOperationException("Client does not exist.");
 
+        var licenseId = existing.LicenseID;
+
         _context.Entry(existing).CurrentValues.SetValues(clientEntity);
+          existing.LicenseID = licenseId;
         _context.SaveChanges();
     }
 

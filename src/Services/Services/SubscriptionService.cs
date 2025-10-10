@@ -1,24 +1,18 @@
 ﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
-using Marketplace.SaaS.Accelerator.DataAccess.Services;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Marketplace.SaaS.Models;
+
 using System;
-using System.ComponentModel;
 
 public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionsRepository subscriptionRepository;
-    private readonly ISubLinesService subLinesService;
 
     public SubscriptionService(
-        ISubscriptionsRepository subscriptionRepo,
-        ISubLinesService subLinesService)
+        ISubscriptionsRepository subscriptionRepo)
     {
         this.subscriptionRepository = subscriptionRepo;
-        this.subLinesService = subLinesService;
     }
 
     // Creates a new subscription and its corresponding billing line
@@ -72,25 +66,34 @@ public class SubscriptionService : ISubscriptionService
             PurTenantId = model.PurchaserTenantId,
             AutoRenew = model.AutoRenew,
             Term = model.Term,
-            StartDate = model.StartDate,
+            StartDate = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
             EndDate = CalculateLicenseEndDate(model.Term),
             SubName = ConvertLicenseType(model.AMPPlanId),
             Country = model.Country
         };
     }
 
-    public static DateTime CalculateLicenseEndDate(string term)
+    public static string CalculateLicenseEndDate(string term)
+
     {
+
+        string endDate;
+
         if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
         {
-            // Si el término es P1M → +1 mes
-            return DateTime.UtcNow.AddMonths(1);
+            endDate = DateTime.UtcNow
+                .AddMonths(1)
+                .ToString("yyyyMMddHHmmssff");
         }
         else
         {
-            // En cualquier otro caso → +1 año
-            return DateTime.UtcNow.AddYears(1);
+            endDate = DateTime.UtcNow
+                .AddYears(1)
+                .ToString("yyyyMMddHHmmssff");
         }
+
+        return endDate;
+
     }
 
 

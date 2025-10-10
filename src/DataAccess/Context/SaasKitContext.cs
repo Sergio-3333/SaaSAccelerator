@@ -65,8 +65,8 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.Country).HasMaxLength(225).IsUnicode(false);
             entity.Property(e => e.PurTenantId).HasMaxLength(36).IsUnicode(false);
             entity.Property(e => e.Term).HasMaxLength(100).IsUnicode(false);
-            entity.Property(e => e.StartDate).HasColumnType("datetime2");
-            entity.Property(e => e.EndDate).HasColumnType("datetime2");
+            entity.Property(e => e.StartDate).HasMaxLength(225).IsUnicode(false);
+            entity.Property(e => e.EndDate).HasMaxLength(225).IsUnicode(false);
             entity.Property(e => e.Active).IsRequired(false);
             entity.Property(e => e.UserID).HasMaxLength(36).IsUnicode(false);
             entity.Property(e => e.AutoRenew).IsRequired(false);
@@ -146,6 +146,8 @@ public partial class SaasKitContext : DbContext
             entity.Property(e => e.OWAPersonColor);
             entity.Property(e => e.UsageCounter);
             entity.Property(e => e.PartnerID);
+            entity.Property(e => e.ContactInfoCountryID);
+            
 
 
             entity.Property(e => e.LicenseType).IsRequired(false);
@@ -162,8 +164,8 @@ public partial class SaasKitContext : DbContext
             entity.HasKey(e => e.SubLinesID);
 
             entity.Property(e => e.MicrosoftID).IsRequired();
-            entity.Property(e => e.ChargeDate).HasColumnType("datetime2");
-            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.ChargeDate).HasMaxLength(225).IsUnicode(false);
+            entity.Property(e => e.Status).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.PlanTest).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.UsersQ).IsRequired();
             entity.Property(e => e.Country).HasMaxLength(100).IsUnicode(false);

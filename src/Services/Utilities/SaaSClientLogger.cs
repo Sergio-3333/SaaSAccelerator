@@ -1,9 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE file in the project root for license information.
-
-using System;
-using System.Web;
-using Marketplace.SaaS.Accelerator.Services.Services;
+﻿using System;
 using Microsoft.Extensions.Logging;
 using ILogger = Marketplace.SaaS.Accelerator.Services.Contracts.ILogger;
 

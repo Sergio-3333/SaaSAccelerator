@@ -1,14 +1,11 @@
-﻿using Marketplace.SaaS.Accelerator.DataAccess.Context;
-using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
+﻿using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using Marketplace.SaaS.Accelerator.Services.Models;
 using Marketplace.SaaS.Accelerator.Services.WebHook;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using System.Linq;
-using System.ComponentModel;
-using Microsoft.EntityFrameworkCore;
+
 
 
 public class WebhookHandler : IWebhookHandler
@@ -17,19 +14,17 @@ public class WebhookHandler : IWebhookHandler
     private readonly ILicensesRepository licensesRepository;
     private readonly ISubLinesRepository subLinesRepository;
 
-    private readonly SaasKitContext _context;
 
 
 
     private readonly ILogger<WebhookHandler> logger;
 
-    public WebhookHandler(SaasKitContext _context, ISubscriptionsRepository subscriptionRepository, ILogger<WebhookHandler> logger, ILicensesRepository licensesRepository, ISubLinesRepository subLinesRepository)
+    public WebhookHandler(ISubscriptionsRepository subscriptionRepository, ILogger<WebhookHandler> logger, ILicensesRepository licensesRepository, ISubLinesRepository subLinesRepository)
     {
         this.subscriptionRepository = subscriptionRepository;
         this.subLinesRepository = subLinesRepository;
         this.licensesRepository = licensesRepository;
         this.logger = logger;
-        this._context = _context;
 
     }
 
@@ -100,13 +95,13 @@ public class WebhookHandler : IWebhookHandler
         var newLine = new SubLines
         {
             MicrosoftID = latestLine.MicrosoftID,
-            ChargeDate = DateTime.UtcNow,
-            Status = 0,
+            ChargeDate = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
+            Status = "Unsubscribe",
             PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
             Plan = latestLine.Plan,
-            USDTotal = 0
+            USDTotal = latestLine.USDTotal
         };
 
         // 3️⃣ Guardar en la BDD
@@ -179,13 +174,13 @@ public class WebhookHandler : IWebhookHandler
         var newLine = new SubLines
         {
             MicrosoftID = latestLine.MicrosoftID,
-            ChargeDate = DateTime.UtcNow,
-            Status = 0,
+            ChargeDate = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
+            Status = "Suspended",
             PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
             Plan = latestLine.Plan,
-            USDTotal = 0
+            USDTotal = latestLine.USDTotal
         };
 
         // 3️⃣ Guardar en la BDD
@@ -212,15 +207,15 @@ public class WebhookHandler : IWebhookHandler
             return;
         }
 
-        DateTime newExpiry;
+        string newExpiry;
 
         if (subscription.Term == "P1Y")
         {
-            newExpiry = DateTime.UtcNow.AddYears(1);
+            newExpiry = DateTime.UtcNow.AddYears(1).ToString("yyyyMMddHHmmssff");
         }
         else
         {
-            newExpiry = DateTime.UtcNow.AddMonths(1);
+            newExpiry = DateTime.UtcNow.AddMonths(1).ToString("yyyyMMddHHmmssff");
         }
 
         subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
@@ -237,7 +232,7 @@ public class WebhookHandler : IWebhookHandler
         licensesRepository.UpdateLicense(license.MicrosoftID, l =>
         {
             l.Status = 2;
-            l.LicenseExpires = newExpiry.ToString("yyyyMMddHHmmss");
+            l.LicenseExpires = newExpiry;
 
         });
 
@@ -247,8 +242,8 @@ public class WebhookHandler : IWebhookHandler
         var newLine = new SubLines
         {
             MicrosoftID = latestLine.MicrosoftID,
-            ChargeDate = DateTime.UtcNow,
-            Status = 1,
+            ChargeDate = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
+            Status = "Reinstated",
             PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,
@@ -278,15 +273,15 @@ public class WebhookHandler : IWebhookHandler
             return;
         }
 
-        DateTime newExpiry;
+        string newExpiry;
 
         if (subscription.Term == "P1Y")
         {
-            newExpiry = DateTime.UtcNow.AddYears(1);
+            newExpiry = DateTime.UtcNow.AddYears(1).ToString("yyyyMMddHHmmssff");
         }
         else
         {
-            newExpiry = DateTime.UtcNow.AddMonths(1);
+            newExpiry = DateTime.UtcNow.AddMonths(1).ToString("yyyyMMddHHmmssff");
         }
 
         subscriptionRepository.UpdateSubscription(subscription.MicrosoftID, s =>
@@ -303,7 +298,7 @@ public class WebhookHandler : IWebhookHandler
         licensesRepository.UpdateLicense(license.MicrosoftID, l =>
         {
             l.Status = 2;
-            l.LicenseExpires = newExpiry.ToString("yyyyMMddHHmmss");
+            l.LicenseExpires = newExpiry;
 
         });
 
@@ -313,8 +308,8 @@ public class WebhookHandler : IWebhookHandler
         var newLine = new SubLines
         {
             MicrosoftID = latestLine.MicrosoftID,
-            ChargeDate = DateTime.UtcNow,
-            Status = 1,
+            ChargeDate = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
+            Status = "Renew",
             PlanTest = latestLine.PlanTest,
             UsersQ = latestLine.UsersQ,
             Country = latestLine.Country,

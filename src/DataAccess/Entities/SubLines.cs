@@ -6,25 +6,27 @@ namespace Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 
 public partial class SubLines
+
 {
+
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int SubLinesID { get; set; }                      // Clave primaria
+    public int SubLinesID { get; set; }                      
 
-    public string MicrosoftID { get; set; }                     // Relación con tabla Subscriptions
+    public string MicrosoftID { get; set; }                     
 
-    public DateTime ChargeDate { get; set; }                 // Fecha de cargo mensual
+    public string ChargeDate { get; set; }                
 
-    public int Status { get; set; }                         // Activo/Inactivo
+    public string Status { get; set; }                         
 
-    public string Plan { get; set; }                       // Plan adquirido
+    public string Plan { get; set; }                      
 
-    public int UsersQ { get; set; }                          // Número de usuarios
+    public int UsersQ { get; set; }                         
 
-    public string Country { get; set; }                      // País del comprador
+    public string Country { get; set; }                      
 
-    public string PlanTest { get; set; }                     // Moneda
+    public string PlanTest { get; set; }                    
 
-    public decimal? USDTotal { get; set; }                     // Precio total (calculable más adelante)
+    public decimal? USDTotal { get; set; }                   
 
 }

@@ -3,7 +3,6 @@ using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
 using System.Linq;
 using System;
-using Microsoft.EntityFrameworkCore;
 
 // Repository for the Subscriptions entity.
 // Handles creation, updates, and retrieval of subscription records.

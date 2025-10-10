@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file in the project root for license information.
 
 using System;
-using Marketplace.SaaS.Accelerator.Services.Services;
 using Microsoft.Extensions.Logging;
 using ILogger = Marketplace.SaaS.Accelerator.Services.Contracts.ILogger;
 

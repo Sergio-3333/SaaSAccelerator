@@ -5,7 +5,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Marketplace.SaaS.Accelerator.DataAccess.Entities;
 
 public partial class Licenses
+
 {
+
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LicenseID { get; set; } 
@@ -58,12 +60,6 @@ public partial class Licenses
     public string Zip { get; set; }
 
     public string Comment { get; set; }
-
-
-
-
-
-
 
     public ICollection<Clients> Clients { get; set; }
 

@@ -1,21 +1,18 @@
 ﻿using Marketplace.SaaS.Accelerator.DataAccess;
 using Marketplace.SaaS.Accelerator.DataAccess.Contracts;
 using Marketplace.SaaS.Accelerator.DataAccess.Entities;
-using Marketplace.SaaS.Accelerator.DataAccess.Repositories;
 using Marketplace.SaaS.Accelerator.Services.Contracts;
 using System;
 
 public class ClientsService : IClientsService
 {
     private readonly IClientsRepository clientsRepository;
-    private readonly ILicenseService licenseService;
     private readonly ILicensesRepository licensesRepository;
 
 
-    public ClientsService(IClientsRepository clientsRepository, ILicenseService licenseService, ILicensesRepository licensesRepository)
+    public ClientsService(IClientsRepository clientsRepository, ILicensesRepository licensesRepository)
     {
         this.clientsRepository = clientsRepository;
-        this.licenseService = licenseService;
         this.licensesRepository = licensesRepository;
     }
 
@@ -110,15 +107,16 @@ public class ClientsService : IClientsService
                 CampaignGUID = "0",
                 LastLocCheck = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 NewsLetterUsageCounter = 0,
-                ContactInfoTitle = "0",
-                ContactInfoWebSite = "0",
-                ContactInfoAddress = "0",
-                ContactInfoLinkedIn = "0",
+                ContactInfoTitle = " ",
+                ContactInfoWebSite = " ",
+                ContactInfoAddress = " ",
+                ContactInfoLinkedIn = " ",
                 FlowUsageCounter = 0,
                 CJMode = 0,
                 InternalNote = " ",
                 InstallDateATC = " ",
-                LastProcessedSkipConsent = 0
+                LastProcessedSkipConsent = 0,
+                ContactInfoCountryID = 0
 
             };
 
