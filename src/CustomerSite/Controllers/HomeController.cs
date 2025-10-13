@@ -240,10 +240,10 @@ public class HomeController : Controller
             return Content("Error: we cannot take the model of the subscription");
 
         var subscriptionFromApi = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
-        await apiService.ActivateSubscriptionAsync(subscriptionFromApi);
 
         if (!subscriptionsRepository.ExistsByMicrosoftId(model.MicrosoftId))
         {
+            await apiService.ActivateSubscriptionAsync(subscriptionFromApi);
             subscriptionService.CreateSubscription(model);
             subLinesService.CreateFromDataModel(model);
             licenseService.SaveLicenseFromInputModel(model);
