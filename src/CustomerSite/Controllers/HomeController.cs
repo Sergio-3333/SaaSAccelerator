@@ -65,7 +65,7 @@ public class HomeController : Controller
 
         var raw = await res.Content.ReadAsStringAsync();
 
-        Console.WriteLine($"[DEBUG] Response from Azure AD to {resourceBase}: {res.StatusCode}\n{raw}");
+        logger.LogInformation($"[DEBUG] Response from Azure AD to {resourceBase}: {res.StatusCode}\n{raw}");
 
         if (!res.IsSuccessStatusCode)
         {
@@ -221,29 +221,42 @@ public class HomeController : Controller
         if (string.IsNullOrWhiteSpace(token))
             return Content("Error: token is empty");
 
-        logger.LogInformation($"Token recived: {token}");
+        logger.LogInformation($"Token received: {token}");
 
         ResolvedSubscription resolved = await apiService.ResolveAsync(token);
         if (resolved?.Id == null || resolved.Id == Guid.Empty)
-            return Content("Error: subscription couldnt be resolved");
+            return Content("Error: subscription couldn't be resolved");
 
         logger.LogInformation($"SubscriptionId resolved: {resolved.Id}");
 
+        var subscriptionDetails = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
+        var purchaserTenantId = subscriptionDetails?.Purchaser?.TenantId?.ToString();
+
+        if (string.IsNullOrEmpty(purchaserTenantId))
+            return Content("Error: purchaser tenant not found");
+
         var model = await GetSubscriptionInputModelAsync(
             resolved.Id.Value,
-            _config.TenantId,
+            purchaserTenantId,
             _config.ClientId,
             _config.ClientSecret
         );
 
-        if (model == null)
-            return Content("Error: we cannot take the model of the subscription");
+        if (model == null || string.IsNullOrEmpty(model.Company))
+        {
+            var consentUrl = $"https://login.microsoftonline.com/{purchaserTenantId}/adminconsent" +
+                             $"?client_id={_config.ClientId}" +
+                             $"&redirect_uri={Uri.EscapeDataString("https://atxtsaas-hedme9ete7gye3c8.westeurope-01.azurewebsites.net/consent-callback")}" +
+                             $"&state={Uri.EscapeDataString(token)}";
 
-        var subscriptionFromApi = await apiService.GetSubscriptionByIdAsync(resolved.Id.Value);
+            return Redirect(consentUrl);
+        }
+
+        await apiService.ActivateSubscriptionAsync(subscriptionDetails);
+        logger.LogInformation($"Estado actual: {subscriptionDetails.SaasSubscriptionStatus}, Plan: {subscriptionDetails.PlanId}");
 
         if (!subscriptionsRepository.ExistsByMicrosoftId(model.MicrosoftId))
         {
-            await apiService.ActivateSubscriptionAsync(subscriptionFromApi);
             subscriptionService.CreateSubscription(model);
             subLinesService.CreateFromDataModel(model);
             licenseService.SaveLicenseFromInputModel(model);
@@ -252,13 +265,33 @@ public class HomeController : Controller
                 s.SubStatus = "Active";
                 s.Active = true;
             });
-
         }
 
         clientsService.CreateOrUpdateClientFromSubscription(model);
-
-        return Redirect("https://www.anttext.com/");
+        return Redirect("https://www.anttext.com/atxt365saas/");
     }
+
+
+
+
+    [Route("consent-callback")]
+    public IActionResult ConsentCallback(string admin_consent, string tenant, string state, string error, string error_description)
+    {
+        if (!string.IsNullOrEmpty(error))
+        {
+            logger.LogError($"Consent failed: {error} - {error_description}");
+            return Content("Consent failed, contact support.");
+        }
+        if (admin_consent == "True")
+        {
+            logger.LogInformation($"Consent granted for tenant {tenant}");
+
+            return Redirect($"/?token={state}");
+        }
+
+        return Content("Consent not granted.");
+    }
+
 
 
 

@@ -59,12 +59,12 @@ public class LicenseService : ILicenseService
             LicenseID = model.LicenseId,
             MicrosoftID = model.MicrosoftId,
             LicenseKey = newLicenseKey,
-            Company = model.Company,
-            City = model.City,
-            Name = model.Name,
-            Email = model.PurchaserEmail,
-            Phone = model.Phone,
-            Mobile= model.Mobile,
+            Company = model.Company ?? "0",
+            City = model.City ?? "0",
+            Name = model.Name ?? "0",
+            Email = model.PurchaserEmail ?? "0",
+            Phone = model.Phone ?? "0",
+            Mobile= model.Mobile ?? "0",
             Status = 2,
             PurchasedLicenses = model.UsersQ,
             Created = DateTime.UtcNow.ToString("yyyyMMddHHmmssff"),
@@ -73,16 +73,16 @@ public class LicenseService : ILicenseService
             LicensesBiz = licensesBiz,
             PartnerID = 0,
             ProductID = 0,
-            Adr1 = model.Adr1,
+            Adr1 = model.Adr1 ?? "0",
             Adr2 = "0",
             GLN = "0",
             VatNo = "0",
             CountryId = 0,
-            CountryMS = model.Country,
-            Zip = model.Zip,
+            CountryMS = model.Country ?? "0",
+            Zip = model.Zip ?? "0",
             Comment = comment
-            
- 
+
+
         };
 
             // Create new license and return its ID

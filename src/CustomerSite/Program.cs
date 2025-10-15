@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.AzureAppServices;
+
 
 namespace Marketplace.SaaS.Accelerator.CustomerSite;
 
@@ -39,6 +41,7 @@ public class Program
                 logging.ClearProviders();
                 logging.AddConsole();
                 logging.AddDebug();
+                logging.AddAzureWebAppDiagnostics();
             })
             .ConfigureWebHostDefaults(webBuilder =>
             {
