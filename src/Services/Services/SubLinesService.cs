@@ -39,14 +39,14 @@ public class SubLinesService : ISubLinesService
     {
         decimal pricePerUser = 0m;
 
-        if (string.Equals(ampPlanId, "atxttst001", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(ampPlanId, "atxt001", StringComparison.OrdinalIgnoreCase))
         {
             if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
                 pricePerUser = 14.99m;
             else if (string.Equals(term, "P1Y", StringComparison.OrdinalIgnoreCase))
                 pricePerUser = 143.90m;
         }
-        else if (string.Equals(ampPlanId, "atxttst002", StringComparison.OrdinalIgnoreCase))
+        else if (string.Equals(ampPlanId, "atxt002", StringComparison.OrdinalIgnoreCase))
         {
             if (string.Equals(term, "P1M", StringComparison.OrdinalIgnoreCase))
                 pricePerUser = 18.99m;
@@ -60,7 +60,7 @@ public class SubLinesService : ISubLinesService
 
     private static string ConvertLicenseType(string ampPlanId)
     {
-        if (string.Equals(ampPlanId, "atxttst001", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(ampPlanId, "atxt001", StringComparison.OrdinalIgnoreCase))
         {
             return "Ant Text 365 Standard";
         }

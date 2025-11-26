@@ -36,7 +36,7 @@ public class LicenseService : ILicenseService
         int? licensesBiz;
         string comment;
 
-        if (model.AMPPlanId == "atxttst001" || model.AMPPlanId == "atxttst003")
+        if (model.AMPPlanId == "atxt001")
         {
             licensesStd = model.UsersQ;
             licensesBiz = 0;

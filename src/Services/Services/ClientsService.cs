@@ -130,11 +130,8 @@ public class ClientsService : IClientsService
     private int ConvertLicenseType(string microsoftPlanId) =>
         microsoftPlanId switch
         {
-            "atxttst001" => 1,
-            "atxttst002" => 2,
-            "atxttst003" => 3,
-            "atxttst004" => 4,
-            "atxttst005" => 5,
+            "atxt001" => 1,
+            "atxt002" => 2,
 
             _ => throw new InvalidOperationException("Unrecognized plan")
         };
