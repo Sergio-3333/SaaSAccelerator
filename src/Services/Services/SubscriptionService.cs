@@ -99,7 +99,11 @@ public class SubscriptionService : ISubscriptionService
 
     private static string ConvertLicenseType(string ampPlanId)
     {
-        if (string.Equals(ampPlanId, "atxt001", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(ampPlanId, "atxt001", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(ampPlanId, "atxtstd025", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(ampPlanId, "atxtstd030", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(ampPlanId, "atxtstd040", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(ampPlanId, "atxtstd050", StringComparison.OrdinalIgnoreCase))
         {
             return "Ant Text 365 Standard";
         }

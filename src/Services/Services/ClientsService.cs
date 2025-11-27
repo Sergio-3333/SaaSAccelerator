@@ -40,12 +40,10 @@ public class ClientsService : IClientsService
         if (string.IsNullOrWhiteSpace(model.PurchaserEmail))
             throw new ArgumentException("Client email cannot be empty.");
 
-        // 1. Buscar el license asociado al email
         var license = licensesRepository.GetByEmail(model.PurchaserEmail);
         if (license == null)
             throw new InvalidOperationException($"No existe un License asociado al email {model.PurchaserEmail}");
 
-        // 2. Buscar cliente por email
         var existingClient = clientsRepository.GetByEmail(model.PurchaserEmail);
 
         int licenseType = ConvertLicenseType(model.AMPPlanId);
@@ -54,14 +52,12 @@ public class ClientsService : IClientsService
         {
             existingClient.MicrosoftID = model.MicrosoftId;
 
-            // Si el cliente no tiene LicenseId asignado, lo actualizamos
             if (existingClient.LicenseID == 0)
             {
                 existingClient.LicenseID = license.LicenseID;
             }
             else if (existingClient.LicenseID != license.LicenseID)
             {
-                // Si hay discrepancia, decides si sobrescribir o lanzar error
                 existingClient.LicenseID = license.LicenseID;
             }
 
@@ -70,7 +66,6 @@ public class ClientsService : IClientsService
         }
         else
         {
-            // Crear nuevo cliente con el LicenseId existente
             var newClient = new Clients
             {
                 OWAEmail = model.PurchaserEmail,
@@ -132,6 +127,14 @@ public class ClientsService : IClientsService
         {
             "atxt001" => 1,
             "atxt002" => 2,
+            "atxtstd025" => 25,
+            "atxtbus025" => 26,
+            "atxtstd030" => 30,
+            "atxtbus030" => 31,
+            "atxtstd040" => 40,
+            "atxtbus040" => 41,
+            "atxtstd050" => 50,
+            "atxtbus050" => 51,
 
             _ => throw new InvalidOperationException("Unrecognized plan")
         };

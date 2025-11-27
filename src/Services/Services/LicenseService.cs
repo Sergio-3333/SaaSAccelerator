@@ -36,12 +36,17 @@ public class LicenseService : ILicenseService
         int? licensesBiz;
         string comment;
 
-        if (model.AMPPlanId == "atxt001")
+        if (model.AMPPlanId == "atxt001"
+            || model.AMPPlanId == "atxtstd025"
+            || model.AMPPlanId == "atxtstd030"
+            || model.AMPPlanId == "atxtstd040"
+            || model.AMPPlanId == "atxtstd050")
         {
             licensesStd = model.UsersQ;
             licensesBiz = 0;
             comment = "Ant Text MS Standard";
         }
+
         else
         {
             licensesStd = 0;
